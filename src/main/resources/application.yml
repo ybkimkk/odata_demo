@@ -1,0 +1,9 @@
+server:
+    port: 8080
+
+odata:
+    url: https://services.odata.org/V3/
+#spring:
+#    cloud:
+#        loadbalancer:
+#            enabled: true
