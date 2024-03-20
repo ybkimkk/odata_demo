@@ -5,14 +5,13 @@ import lombok.Data;
 
 /**
  * @author jinyongbin
- * @since 2024-03-15 15:48:11
+ * @since  2024-03-19 13:35:48
  */
 @Data
 @AllArgsConstructor
 public final class R<T> {
     private String msg;
     private T data;
-    private Boolean isSuccess;
     private Integer code;
 
     public static <T> R<T> ok() {
@@ -28,7 +27,7 @@ public final class R<T> {
     }
 
     public static <T> R<T> ok(String msg, T data) {
-        return new R<>(msg, data, true, 200);
+        return new R<>(msg, data, 200);
     }
 
     public static <T> R<T> error() {
@@ -36,6 +35,6 @@ public final class R<T> {
     }
 
     public static <T> R<T> error(String msg) {
-        return new R<>(msg, null, false, 500);
+        return new R<>(msg, null, 500);
     }
 }

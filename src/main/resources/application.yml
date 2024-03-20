@@ -1,9 +1,18 @@
 server:
-    port: 8080
-
+  port: 80
 odata:
-    url: https://services.odata.org/V3/
-#spring:
-#    cloud:
-#        loadbalancer:
-#            enabled: true
+  multipartFlag: java
+  url: http://localhost:8080/
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ry?characterEncoding=UTF-8&allowMultiQueries=true
+    password: binbin0202
+    username: root
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+
+edm:
+  nameSpace: OData.Demo
+  containerName: Container
