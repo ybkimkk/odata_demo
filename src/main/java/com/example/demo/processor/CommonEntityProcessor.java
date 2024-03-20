@@ -21,7 +21,7 @@ import java.util.Map;
 public class CommonEntityProcessor {
 
     @Resource
-    private ApplicationContext applicationContext;
+    protected ApplicationContext applicationContext;
     protected static Map<String, CommonService> SERVICE_MAP = new HashMap<>();
 
     @PostConstruct
@@ -40,22 +40,26 @@ public class CommonEntityProcessor {
 
     protected EntityCollection getEntityCollection(List<?> list) {
         EntityCollection retEntitySet = new EntityCollection();
-        Entity entity = new Entity();
         try {
             for (Object object : list) {
                 Class<?> aClass = object.getClass();
                 Field[] declaredFields = aClass.getDeclaredFields();
-                for (Field field : declaredFields) {
-                    field.setAccessible(true);
-                    entity.addProperty(new Property(null, field.getName(), ValueType.PRIMITIVE, field.get(object)));
-                }
-                retEntitySet.getEntities().add(entity);
+                retEntitySet.getEntities().add(editEntityValue(object, declaredFields));
             }
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
 
         return retEntitySet;
+    }
+
+    private Entity editEntityValue(Object object, Field[] declaredFields) throws IllegalAccessException {
+        Entity entity = new Entity();
+        for (Field field : declaredFields) {
+            field.setAccessible(true);
+            entity.addProperty(new Property(null, field.getName(), ValueType.PRIMITIVE, field.get(object)));
+        }
+        return entity;
     }
 
     protected Map<String, Object> getMapByEntity(Entity entity) {

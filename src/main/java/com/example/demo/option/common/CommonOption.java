@@ -1,9 +1,13 @@
 package com.example.demo.option.common;
 
-import org.apache.olingo.commons.api.data.EntityCollection;
+import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions;
 import org.apache.olingo.server.api.uri.UriInfo;
 
+import java.util.List;
+
 public interface CommonOption {
-    public void checkOption(EntityCollectionSerializerOptions.Builder builder, UriInfo uriInfo, EntityCollection entityCollection);
+    List<?> filter(EntityCollectionSerializerOptions.Builder builder, UriInfo uriInfo, List<?> list) throws ODataApplicationException;
+
+    int getOrder();
 }
