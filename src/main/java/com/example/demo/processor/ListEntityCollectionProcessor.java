@@ -21,7 +21,8 @@ package com.example.demo.processor;
 
 import com.example.demo.data.Storage;
 import lombok.RequiredArgsConstructor;
-import org.apache.olingo.commons.api.data.*;
+import org.apache.olingo.commons.api.data.ContextURL;
+import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.format.ContentType;
@@ -36,12 +37,13 @@ import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.queryoption.CountOption;
+import org.apache.olingo.server.api.uri.queryoption.SkipOption;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
@@ -49,7 +51,6 @@ public class ListEntityCollectionProcessor extends CommonEntityProcessor impleme
 
     private OData odata;
 
-    private final Storage storage;
     private ServiceMetadata serviceMetadata;
 
 
@@ -68,22 +69,42 @@ public class ListEntityCollectionProcessor extends CommonEntityProcessor impleme
 
         // 2nd: fetch the data from backend for this requested EntitySetName
         // it has to be delivered as EntitySet object
-        List<?> sqlResult = getMapper(edmEntitySet.getName()).selectByMap(new HashMap<>());
+
+        //----------------------------------------自定义----------------------------------------------
+
+        ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).build();
+        final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
+        EntityCollectionSerializerOptions.Builder builder = EntityCollectionSerializerOptions
+                .with()
+                .id(id)
+                .contextURL(contextUrl);
+
+        List<?> sqlResult = getService(edmEntitySet.getName()).selectByCondition(new HashMap<>());
         EntityCollection entityCollection = getEntityCollection(sqlResult);
+
+        CountOption countOption = uriInfo.getCountOption();
+        if (countOption != null && countOption.getValue()) {
+            getCount(entityCollection);
+            builder.count(countOption);
+        }
+        //-------------------------------------------------------------------------------------------
+
         ODataSerializer serializer = odata.createSerializer(responseFormat);
 
         // and serialize the content: transform from the EntitySet object to InputStream
         EdmEntityType edmEntityType = edmEntitySet.getEntityType();
-        ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).build();
 
-        final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
-        EntityCollectionSerializerOptions opts =
-                EntityCollectionSerializerOptions.with().id(id).contextURL(contextUrl).build();
+        EntityCollectionSerializerOptions opts =  builder.build();
         SerializerResult serializedContent = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);
 
         // Finally: configure the response object: set the body, headers and status code
         response.setContent(serializedContent.getContent());
         response.setStatusCode(HttpStatusCode.OK.getStatusCode());
         response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+    }
+
+
+    private void getCount(EntityCollection entityCollection) {
+        entityCollection.setCount(entityCollection.getEntities().size());
     }
 }

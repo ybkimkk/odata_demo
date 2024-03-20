@@ -1,52 +1,53 @@
 package com.example.demo.processor;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.demo.entity.TestEntity;
-import com.example.demo.mapper.TestMapper;
+import cn.hutool.core.util.StrUtil;
 import com.example.demo.service.CommonService;
-import com.example.demo.service.TestService;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Component
 public class CommonEntityProcessor {
-    @Autowired
-    private TestMapper testMapper;
 
+    @Resource
+    private ApplicationContext applicationContext;
+    protected static Map<String, CommonService> SERVICE_MAP = new HashMap<>();
 
-    protected static Map<String, TestMapper> mapperMap = null;
-
-
-    protected BaseMapper<?> getMapper(String db) {
-        if (Objects.isNull(mapperMap)) {
-            mapperMap = new HashMap<>();
-            mapperMap.put("Tests", testMapper);
+    @PostConstruct
+    public void init() {
+        Map<String, CommonService> beansOfType = applicationContext.getBeansOfType(CommonService.class);
+        for (Map.Entry<String, CommonService> entry : beansOfType.entrySet()) {
+            CommonService commonService = entry.getValue();
+            SERVICE_MAP.put(StrUtil.upperFirst(entry.getKey().replace("Service", StrUtil.EMPTY)), commonService);
         }
+    }
 
-        return mapperMap.get(db);
+
+    protected CommonService getService(String db) {
+        return SERVICE_MAP.get(db);
     }
 
     protected EntityCollection getEntityCollection(List<?> list) {
         EntityCollection retEntitySet = new EntityCollection();
         Entity entity = new Entity();
         try {
-            for (Object o : list) {
-                Class<?> aClass = o.getClass();
+            for (Object object : list) {
+                Class<?> aClass = object.getClass();
                 Field[] declaredFields = aClass.getDeclaredFields();
                 for (Field field : declaredFields) {
                     field.setAccessible(true);
-                    entity.addProperty(new Property(null, field.getName(), ValueType.PRIMITIVE, field.get(o)));
+                    entity.addProperty(new Property(null, field.getName(), ValueType.PRIMITIVE, field.get(object)));
                 }
                 retEntitySet.getEntities().add(entity);
             }
@@ -55,6 +56,14 @@ public class CommonEntityProcessor {
         }
 
         return retEntitySet;
+    }
+
+    protected Map<String, Object> getMapByEntity(Entity entity) {
+        Map<String, Object> stringObjectMap = new HashMap<>();
+        for (Property property : entity.getProperties()) {
+            stringObjectMap.put(property.getName(), property.getValue());
+        }
+        return stringObjectMap;
     }
 
 }

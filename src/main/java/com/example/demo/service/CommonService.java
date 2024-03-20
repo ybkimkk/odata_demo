@@ -1,11 +1,14 @@
 package com.example.demo.service;
 
 import com.example.demo.entity.TestEntity;
-import com.example.demo.entity.common.R;
-import org.apache.olingo.commons.api.edm.provider.CsdlEntityType;
 
 import java.util.List;
+import java.util.Map;
 
 public interface CommonService {
-    R<List<TestEntity>> selectByCondition(TestEntity request) throws NullPointerException;
+    List<TestEntity> selectByCondition(Map<String, Object> arg) throws NullPointerException;
+    TestEntity insert(Map<String, Object> arg) throws NullPointerException;
+
+    TestEntity update(Map<String, Object> arg) throws NullPointerException;
+    int delete(String id) throws NullPointerException;
 }

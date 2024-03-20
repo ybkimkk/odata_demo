@@ -20,6 +20,7 @@ package com.example.demo.processor;
 
 
 import com.example.demo.data.Storage;
+import com.example.demo.entity.TestEntity;
 import com.example.demo.util.Util;
 import lombok.RequiredArgsConstructor;
 import org.apache.olingo.commons.api.data.ContextURL;
@@ -44,21 +45,19 @@ import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriParameter;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.core.uri.UriInfoImpl;
+import org.apache.olingo.server.core.uri.UriResourceEntitySetImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
 public class DetailEntityProcessor extends CommonEntityProcessor implements EntityProcessor {
 
     private OData odata;
-
-    private final Storage storage;
     private ServiceMetadata serviceMetadata;
 
     @Autowired
@@ -71,7 +70,7 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
     }
 
 
-    public void readEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) throws ODataApplicationException, SerializerException {
+    public void readEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) throws SerializerException {
 
         // 1. retrieve the Entity Type
         List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
@@ -81,9 +80,13 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
         // 2. retrieve the data from backend
         List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
 
+
+        //--------------------------------------------------------------------------------------------------------------
         Map<String, Object> query = new HashMap<>();
         query.put(keyPredicates.get(0).getName().toLowerCase(), Integer.valueOf(keyPredicates.get(0).getText()));
-        EntityCollection entityCollection = getEntityCollection(getMapper( edmEntitySet.getName()).selectByMap(query));
+        EntityCollection entityCollection = getEntityCollection(getService(edmEntitySet.getName()).selectByCondition(query));
+        //--------------------------------------------------------------------------------------------------------------
+
 
         // 3. serialize
         EdmEntityType entityType = edmEntitySet.getEntityType();
@@ -127,9 +130,14 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
         InputStream requestInputStream = request.getBody();
         ODataDeserializer deserializer = this.odata.createDeserializer(requestFormat);
         DeserializerResult result = deserializer.entity(requestInputStream, edmEntityType);
-        Entity requestEntity = result.getEntity();
-        // 2.2 do the creation in backend, which returns the newly created entity
-        Entity createdEntity = storage.createEntityData(edmEntitySet, requestEntity);
+
+
+        //--------------------------------------------------------------------------------------------------------------
+        TestEntity insert = getService(edmEntitySet.getName()).insert(getMapByEntity(result.getEntity()));
+        EntityCollection entityCollection = getEntityCollection(Collections.singletonList(insert));
+        Entity createdEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
+        //--------------------------------------------------------------------------------------------------------------
+
 
         // 3. serialize the response (we have to return the created entity)
         ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).build();
@@ -149,9 +157,7 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
     }
 
 
-    public void updateEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo,
-                             ContentType requestFormat, ContentType responseFormat)
-            throws ODataApplicationException, DeserializerException, SerializerException {
+    public void updateEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat, ContentType responseFormat) throws DeserializerException, SerializerException {
 
         // 1. Retrieve the entity set which belongs to the requested entity
         List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
@@ -165,15 +171,29 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
         InputStream requestInputStream = request.getBody();
         ODataDeserializer deserializer = this.odata.createDeserializer(requestFormat);
         DeserializerResult result = deserializer.entity(requestInputStream, edmEntityType);
-        Entity requestEntity = result.getEntity();
-        // 2.2 do the modification in backend
-        List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-        // Note that this updateEntity()-method is invoked for both PUT or PATCH operations
-        HttpMethod httpMethod = request.getMethod();
-        storage.updateEntityData(edmEntitySet, keyPredicates, requestEntity, httpMethod);
 
-        //3. configure the response object
-        response.setStatusCode(HttpStatusCode.NO_CONTENT.getStatusCode());
+        //--------------------------------------------------------------------------------------------------------------
+        List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
+        UriParameter uriParameter = keyPredicates.stream().findFirst().orElse(null);
+        Map<String, Object> mapByEntity = getMapByEntity(result.getEntity());
+        mapByEntity.put("ID", uriParameter.getText());
+        TestEntity insert = getService(edmEntitySet.getName()).update(mapByEntity);
+        EntityCollection entityCollection = getEntityCollection(Collections.singletonList(insert));
+        Entity requestEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
+
+
+        ODataSerializer serializer = this.odata.createSerializer(responseFormat);
+        ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).build();
+        EntitySerializerOptions options = EntitySerializerOptions.with().contextURL(contextUrl).build(); // expand and select currently not supported
+        SerializerResult serializedResponse = serializer.entity(serviceMetadata, edmEntityType, requestEntity, options);
+        //4. configure the response object
+        final String location = request.getRawBaseUri() + '/' + odata.createUriHelper().buildCanonicalURL(edmEntitySet, requestEntity);
+
+        response.setHeader(HttpHeader.LOCATION, location);
+        response.setContent(serializedResponse.getContent());
+        response.setStatusCode(HttpStatusCode.CREATED.getStatusCode());
+        response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+        //--------------------------------------------------------------------------------------------------------------
     }
 
 
@@ -188,7 +208,11 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
 
         // 2. delete the data in backend
         List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-        storage.deleteEntityData(edmEntitySet, keyPredicates);
+
+        //--------------------------------------------------------------------------------------------------------------
+        String id = keyPredicates.stream().map(UriParameter::getText).findFirst().orElseThrow(RuntimeException::new);
+        getService(edmEntitySet.getName()).delete(id);
+        //--------------------------------------------------------------------------------------------------------------
 
         //3. configure the response object
         response.setStatusCode(HttpStatusCode.NO_CONTENT.getStatusCode());

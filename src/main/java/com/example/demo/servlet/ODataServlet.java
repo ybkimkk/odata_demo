@@ -15,11 +15,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@WebServlet(name = "ODataServlet", urlPatterns = "/Test.svc/*")
+@WebServlet(name = "ODataServlet", urlPatterns = "/Aspn.svc/*")
 
 public class ODataServlet extends HttpServlet {
 
-        @Autowired
+    @Autowired
     private ListEntityCollectionProcessor entityCollectionProcessor;
 
     @Autowired
@@ -45,6 +45,7 @@ public class ODataServlet extends HttpServlet {
         handler.register(entityCollectionProcessor);
         handler.register(entityProcessor);
         handler.register(primitiveProcessor);
+//        handler.register(sizeEntityCollectionProcessor);
         handler.register(batchProcessor);
     }
 
@@ -61,11 +62,11 @@ public class ODataServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.getWriter().println("Hello, doPut!");
+        handler.process(req, resp);
     }
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.getWriter().println("Hello, doDelete!");
+        handler.process(req, resp);
     }
 }

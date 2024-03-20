@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.TestMapper">
+
+    <resultMap type="com.example.demo.entity.TestEntity" id="TestMap">
+        <result property="id" column="ID"/>
+        <result property="name" column="NAME"/>
+        <result property="age" column="AGE"/>
+        <result property="price" column="PRICE"/>
+    </resultMap>
+
+    <sql id="base_column">
+        `ID`,
+        `NAME`,
+        `AGE`,
+        `PRICE`
+    </sql>
+
+    <sql id="table_name">`ry`.`test`</sql>
+
+<!--    <sql id="base_where">-->
+<!--        <where>-->
+<!--            <if test="arg.id != null">-->
+<!--                and `ID` = #{arg.id}-->
+<!--            </if>-->
+<!--            <if test="arg.NAME != null and arg.NAME != ''">-->
+<!--                and `NAME` = #{arg.NAME}-->
+<!--            </if>-->
+<!--            <if test="arg.AGE != null">-->
+<!--                and `AGE` = #{arg.AGE}-->
+<!--            </if>-->
+<!--            <if test="arg.PRICE != null and arg.PRICE != ''">-->
+<!--                and `PRICE` = #{arg.PRICE}-->
+<!--            </if>-->
+<!--        </where>-->
+<!--    </sql>-->
+
+<!--    <select id="selectByCondition" resultMap="TestMap">-->
+<!--        select-->
+<!--        <include refid="base_column"/>-->
+<!--        from <include refid="table_name"/>-->
+<!--        <include refid="base_where"/>-->
+<!--    </select>-->
+
+<!--    <select id="selectByConditionPage" resultMap="TestMap">-->
+<!--        select-->
+<!--        <include refid="base_column"/>-->
+<!--        from <include refid="table_name"/>-->
+<!--        <include refid="base_where"/>-->
+<!--    </select>-->
+
+<!--    <delete id="deleteByCondition">-->
+<!--        delete from <include refid="table_name"/>-->
+<!--        <include refid="base_where"/>-->
+<!--    </delete>-->
+
+    <update id="updateBatch">
+        <foreach collection="arg" item="item">
+            update
+            <include refid="table_name"/>
+            <set>
+                <trim suffixOverrides="," prefixOverrides=",">
+                    <if test="item.NAME != null and item.NAME != ''">
+                        `NAME`= #{item.NAME},
+                    </if>
+                    <if test="item.AGE != null">
+                        `AGE`= #{item.AGE},
+                    </if>
+                    <if test="item.PRICE != null and item.PRICE != ''">
+                        `PRICE`= #{item.PRICE}
+                    </if>
+                </trim>
+            </set>
+            <where>ID = #{item.ID}</where>
+        </foreach>
+    </update>
+
+    <insert id="insertByCondition" keyProperty="ID" parameterType="com.example.demo.entity.TestEntity" useGeneratedKeys="true">
+        insert into <include refid="table_name"/>
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="arg.ID != null">
+                `ID`,
+            </if>
+            <if test="arg.NAME != null and arg.NAME != ''">
+                `NAME`,
+            </if>
+            <if test="arg.AGE != null">
+                `AGE`,
+            </if>
+            <if test="arg.PRICE != null and arg.PRICE != ''">
+                `PRICE`,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" >
+            <if test="arg.ID != null">
+                #{arg.ID},
+            </if>
+            <if test="arg.NAME != null and arg.NAME != ''">
+                #{arg.NAME},
+            </if>
+            <if test="arg.AGE != null">
+                #{arg.AGE},
+            </if>
+            <if test="arg.PRICE != null and arg.PRICE != ''">
+                #{arg.PRICE}
+            </if>
+        </trim>
+    </insert>
+</mapper>
+

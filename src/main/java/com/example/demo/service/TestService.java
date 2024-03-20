@@ -6,7 +6,5 @@ package com.example.demo.service;
  */
 
 public interface TestService extends CommonService {
-
-
 }
 

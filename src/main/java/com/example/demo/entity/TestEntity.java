@@ -1,5 +1,6 @@
 package com.example.demo.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -13,7 +14,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 @Data
 @TableName("test")
 public class TestEntity {
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long ID;
     private String NAME;
     private Long AGE;
