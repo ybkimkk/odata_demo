@@ -10,28 +10,22 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 @Component
 public class TopOption implements CommonOption {
     @Override
-    public List<?> filter(EntityCollectionSerializerOptions.Builder builder, UriInfo uriInfo, List<?> list) throws ODataApplicationException {
+    public void filter(EntityCollectionSerializerOptions.Builder builder, UriInfo uriInfo, Map<String, Object> query) throws ODataApplicationException {
         org.apache.olingo.server.api.uri.queryoption.TopOption topOption = uriInfo.getTopOption();
         if (topOption != null) {
             int topNumber = topOption.getValue();
             if (topNumber >= 0) {
-                if (topNumber <= list.size()) {
-                    list = list.subList(0, topNumber);
-                }  // else the client has requested more entities than available => return what we have
+                query.put("count", topNumber);
             } else {
                 throw new ODataApplicationException("Invalid value for $top", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
             }
         }
-        return list;
     }
 
-    @Override
-    public int getOrder() {
-        return 100;
-    }
 }

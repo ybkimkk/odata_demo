@@ -5,9 +5,9 @@ import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions
 import org.apache.olingo.server.api.uri.UriInfo;
 
 import java.util.List;
+import java.util.Map;
 
 public interface CommonOption {
-    List<?> filter(EntityCollectionSerializerOptions.Builder builder, UriInfo uriInfo, List<?> list) throws ODataApplicationException;
+    void filter(EntityCollectionSerializerOptions.Builder builder, UriInfo uriInfo, Map<String, Object> query) throws ODataApplicationException;
 
-    int getOrder();
 }

@@ -3,10 +3,10 @@
 <mapper namespace="com.example.demo.mapper.TestMapper">
 
     <resultMap type="com.example.demo.entity.TestEntity" id="TestMap">
-        <result property="id" column="ID"/>
-        <result property="name" column="NAME"/>
-        <result property="age" column="AGE"/>
-        <result property="price" column="PRICE"/>
+        <result property="ID" column="ID"/>
+        <result property="NAME" column="NAME"/>
+        <result property="AGE" column="AGE"/>
+        <result property="PRICE" column="PRICE"/>
     </resultMap>
 
     <sql id="base_column">
@@ -18,36 +18,53 @@
 
     <sql id="table_name">`ry`.`test`</sql>
 
-<!--    <sql id="base_where">-->
-<!--        <where>-->
-<!--            <if test="arg.id != null">-->
-<!--                and `ID` = #{arg.id}-->
-<!--            </if>-->
-<!--            <if test="arg.NAME != null and arg.NAME != ''">-->
-<!--                and `NAME` = #{arg.NAME}-->
-<!--            </if>-->
-<!--            <if test="arg.AGE != null">-->
-<!--                and `AGE` = #{arg.AGE}-->
-<!--            </if>-->
-<!--            <if test="arg.PRICE != null and arg.PRICE != ''">-->
-<!--                and `PRICE` = #{arg.PRICE}-->
-<!--            </if>-->
-<!--        </where>-->
-<!--    </sql>-->
+    <sql id="base_where">
+        <where>
+            <if test="arg.ID != null">
+                and `ID` = #{arg.ID}
+            </if>
+            <if test="arg.NAME != null and arg.NAME != ''">
+                and `NAME` = #{arg.NAME}
+            </if>
+            <if test="arg.AGE != null">
+                and `AGE` = #{arg.AGE}
+            </if>
+            <if test="arg.PRICE != null and arg.PRICE != ''">
+                and `PRICE` = #{arg.PRICE}
+            </if>
+        </where>
+    </sql>
 
-<!--    <select id="selectByCondition" resultMap="TestMap">-->
-<!--        select-->
-<!--        <include refid="base_column"/>-->
-<!--        from <include refid="table_name"/>-->
-<!--        <include refid="base_where"/>-->
-<!--    </select>-->
+    <select id="selectByCondition" resultMap="TestMap">
+        SELECT
+        <include refid="base_column"/>
+        from
+        <include refid="table_name"/>
+        <if test="arg.filter != null and arg.filter != ''">
+            <where>
+                ${arg.filter}
+            </where>
+        </if>
+        <if test="arg.filter == null and arg.filter == ''">
+            <include refid="base_where"/>
+        </if>
+        <if test="arg.orderBy != null and arg.orderBy != ''">
+            ORDER BY ${arg.orderBy}
+        </if>
+        <if test="arg.offset != null and arg.count != null">
+            LIMIT #{arg.offset} ,#{arg.count}
+        </if>
+        <if test="arg.offset == null and arg.count != null">
+            LIMIT #{arg.count}
+        </if>
+    </select>
 
-<!--    <select id="selectByConditionPage" resultMap="TestMap">-->
-<!--        select-->
-<!--        <include refid="base_column"/>-->
-<!--        from <include refid="table_name"/>-->
-<!--        <include refid="base_where"/>-->
-<!--    </select>-->
+    <select id="selectByConditionPage" resultMap="TestMap">
+        select
+        <include refid="base_column"/>
+        from <include refid="table_name"/>
+        <include refid="base_where"/>
+    </select>
 
 <!--    <delete id="deleteByCondition">-->
 <!--        delete from <include refid="table_name"/>-->
@@ -105,6 +122,7 @@
                 #{arg.PRICE}
             </if>
         </trim>
+
     </insert>
 </mapper>
 

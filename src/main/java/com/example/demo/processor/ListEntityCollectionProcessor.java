@@ -39,6 +39,7 @@ import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.api.uri.queryoption.CountOption;
+import org.apache.olingo.server.api.uri.queryoption.SelectOption;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.OrderComparator;
 import org.springframework.stereotype.Component;
@@ -82,15 +83,13 @@ public class ListEntityCollectionProcessor extends CommonEntityProcessor impleme
                 .with()
                 .id(id)
                 .contextURL(contextUrl);
-
-        List<?> sqlResult = getService(edmEntitySet.getName()).selectByCondition(new HashMap<>());
-
+        Map<String, Object> query = new HashMap<>();
         Map<String, CommonOption> options = applicationContext.getBeansOfType(CommonOption.class);
-        List<CommonOption> sortedOptions = new ArrayList<>(options.values());
-        OrderComparator.sort(sortedOptions);
         for (CommonOption value : options.values()) {
-            sqlResult = value.filter(builder, uriInfo, sqlResult);
+            value.filter(builder, uriInfo, query);
         }
+
+        List<?> sqlResult = getService(edmEntitySet.getName()).selectByCondition(query);
 
         EntityCollection entityCollection = getEntityCollection(sqlResult);
         CountOption countOption = uriInfo.getCountOption();

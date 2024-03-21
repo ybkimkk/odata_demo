@@ -7,31 +7,23 @@ import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Component
 public class SkipOption implements CommonOption {
     @Override
-    public List<?> filter(EntityCollectionSerializerOptions.Builder builder, UriInfo uriInfo, List<?> list) throws ODataApplicationException {
+    public void filter(EntityCollectionSerializerOptions.Builder builder, UriInfo uriInfo, Map<String, Object> query) throws ODataApplicationException {
         org.apache.olingo.server.api.uri.queryoption.SkipOption skipOption = uriInfo.getSkipOption();
         if (skipOption != null) {
             int skipNumber = skipOption.getValue();
             if (skipNumber >= 0) {
-                if (skipNumber <= list.size()) {
-                    list = list.subList(skipNumber, list.size());
-                } else {
-                    list.clear();
-                }
+                query.put("offset", skipNumber);
             } else {
                 throw new ODataApplicationException("Invalid value for $skip", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
             }
         }
-        return list;
+
     }
 
-    @Override
-    public int getOrder() {
-        return 100;
-    }
 }

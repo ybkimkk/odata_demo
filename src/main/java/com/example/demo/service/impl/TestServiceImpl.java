@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author jinyongbin
@@ -26,7 +27,11 @@ public class TestServiceImpl implements TestService {
 
     @Override
     public List<TestEntity> selectByCondition(Map<String, Object> arg) throws NullPointerException {
-        return testMapper.selectByMap(arg);
+        TestEntity testEntity = Convert.convert(TestEntity.class, arg);
+        if (Objects.nonNull(testEntity.getOffset()) && Objects.isNull(testEntity.getCount())) {
+            testEntity.setCount(testMapper.selectCount(new QueryWrapper<>()));
+        }
+        return testMapper.selectByCondition(testEntity);
     }
 
     @Override
