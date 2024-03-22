@@ -45,7 +45,6 @@ import java.util.*;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class CollectionProcessor extends CommonProcessor implements org.apache.olingo.server.api.processor.EntityCollectionProcessor {
 
     private OData odata;

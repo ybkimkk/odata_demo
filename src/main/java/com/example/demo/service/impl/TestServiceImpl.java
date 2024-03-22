@@ -144,48 +144,24 @@ public class TestServiceImpl extends AbCommonService implements ITestService {
     @Override
     public List<CsdlAction> getActions(final FullQualifiedName actionName) {
         //创建入参
-//        List<CsdlAction> actions = new ArrayList<>();
-//
-//        actions.add(getTest());
-//
-//        return actions;
+        List<CsdlAction> actions = new ArrayList<>();
 
-//        return null;
-
-
-        final List<CsdlAction> actions = new ArrayList<CsdlAction>();
-
-
-        // Create parameters
-        final List<CsdlParameter> parameters = new ArrayList<CsdlParameter>();
-        final CsdlParameter parameter = new CsdlParameter();
-        parameter.setName(PARAMETER_AMOUNT);
-        parameter.setType(EdmPrimitiveTypeKind.Int32.getFullQualifiedName());
-        parameters.add(parameter);
-
-        // Create the Csdl Action
-        final CsdlAction action = new CsdlAction();
-        action.setName(ACTION_RESET_FQN.getName());
-        action.setParameters(parameters);
-        actions.add(action);
+        actions.add(getTest());
 
         return actions;
+
+//        return null;
     }
 
     @Override
-    public CsdlActionImport getActionImport(final FullQualifiedName entityContainer, String actionImportName) {
-//        return new CsdlActionImport()
-//                .setName("Reset")
-//                .setAction(ACTION_RESET_FQN);
-        // It is allowed to overload actions, so we have to provide a list of Actions for each action name
+    public CsdlActionImport getActionImport(FullQualifiedName entityContainer, String actionImportName) {
         return new CsdlActionImport()
-                .setName(actionImportName)
-                .setAction(ACTION_RESET_FQN);
-
+                .setName("Reset")
+                .setAction(entityContainer);
     }
 
     @Override
-    public List<CsdlFunction> getFunctions(final FullQualifiedName actionName) {
+    public List<CsdlFunction> getFunctions(FullQualifiedName actionName) {
         List<CsdlFunction> functions = new ArrayList<>();
         functions.add(getTestFunction());
         return functions;
@@ -194,7 +170,7 @@ public class TestServiceImpl extends AbCommonService implements ITestService {
     }
 
     @Override
-    public CsdlFunctionImport getFunctionImport(final FullQualifiedName entityContainer, String functionImportName) {
+    public CsdlFunctionImport getFunctionImport(FullQualifiedName entityContainer, String functionImportName) {
         return new CsdlFunctionImport()
                 .setName(functionImportName)
                 .setFunction(getAllFullQualifiedName(functionImportName))

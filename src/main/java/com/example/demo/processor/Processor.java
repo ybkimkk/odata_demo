@@ -20,9 +20,8 @@ package com.example.demo.processor;
 
 
 import com.example.demo.processor.common.CommonProcessor;
-import com.example.demo.processor.common.InitEdmProvider;
+import com.example.demo.processor.common.EdmProvider;
 import com.example.demo.util.Util;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
@@ -42,22 +41,18 @@ import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.io.InputStream;
 import java.util.*;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class Processor extends CommonProcessor implements org.apache.olingo.server.api.processor.EntityProcessor {
 
     private OData odata;
     private ServiceMetadata serviceMetadata;
-
-    @Autowired
-    InitEdmProvider initEdmProvider;
 
 
     public void init(OData odata, ServiceMetadata serviceMetadata) {
@@ -220,6 +215,6 @@ public class Processor extends CommonProcessor implements org.apache.olingo.serv
         //--------------------------------------------------------------------------------------------------------------
 
         //3. configure the response object
-        response.setStatusCode(HttpStatusCode.NO_CONTENT.getStatusCode());
+        response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 }

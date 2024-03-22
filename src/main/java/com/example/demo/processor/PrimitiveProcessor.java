@@ -47,11 +47,9 @@ import java.util.Locale;
 import java.util.Map;
 
 @Component
-@RequiredArgsConstructor
 public class PrimitiveProcessor extends CommonProcessor implements org.apache.olingo.server.api.processor.PrimitiveProcessor {
 
     private OData odata;
-    private final Storage storage;
     private ServiceMetadata serviceMetadata;
 
 
@@ -128,7 +126,7 @@ public class PrimitiveProcessor extends CommonProcessor implements org.apache.ol
             response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
         } else {
             // in case there's no value for the property, we can skip the serialization
-            response.setStatusCode(HttpStatusCode.NO_CONTENT.getStatusCode());
+            response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
         }
     }
 

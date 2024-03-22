@@ -1,7 +1,5 @@
 package com.example.demo.processor;
 
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.server.api.*;
@@ -13,16 +11,19 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-
 public class ActionProcessor implements ActionVoidProcessor, ActionEntityCollectionProcessor, ActionEntityProcessor {
 
-    private  OData odata;
+    private OData odata;
 
-    private  ServiceMetadata serviceMetadata;
+    private ServiceMetadata serviceMetadata;
+
+    public ActionProcessor() {
+        log.info("wocaole ");
+    }
+
     @Override
     public void init(final OData odata, final ServiceMetadata serviceMetadata) {
         this.odata = odata;
-        this.serviceMetadata = serviceMetadata;
     }
 
     @Override

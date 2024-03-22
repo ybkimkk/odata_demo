@@ -31,10 +31,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /*
  * this class is supposed to declare the metadata of the OData service
@@ -43,58 +40,8 @@ import java.util.Objects;
  */
 @Component
 @Slf4j
-public class InitEdmProvider extends CsdlAbstractEdmProvider {
-
-    public static final String NAMESPACE = "OData.Demo";
-
-    // EDM Container
-    public static final String CONTAINER_NAME = "Container";
-    public static final FullQualifiedName CONTAINER = new FullQualifiedName(NAMESPACE, CONTAINER_NAME);
-
-    // Entity Types Names
-    public static final String ET_PRODUCT_NAME = "Product";
-    public static final FullQualifiedName ET_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, ET_PRODUCT_NAME);
-
-    public static final String ET_CATEGORY_NAME = "Category";
-    public static final FullQualifiedName ET_CATEGORY_FQN = new FullQualifiedName(NAMESPACE, ET_CATEGORY_NAME);
-
-    // Entity Set Names
-    public static final String ES_PRODUCTS_NAME = "Products";
-    public static final String ES_CATEGORIES_NAME = "Categories";
-
-    // Action
-    public static final String ACTION_RESET = "Reset";
-    public static final FullQualifiedName ACTION_RESET_FQN = new FullQualifiedName(NAMESPACE, ACTION_RESET);
-
-    //Bound Action
-    public static final String ACTION_PROVIDE_DISCOUNT = "DiscountProducts";
-    public static final FullQualifiedName ACTION_PROVIDE_DISCOUNT_FQN = new FullQualifiedName(NAMESPACE, ACTION_PROVIDE_DISCOUNT);
-
-    //Bound Action
-    public static final String ACTION_PROVIDE_DISCOUNT_FOR_PRODUCT = "DiscountProduct";
-    public static final FullQualifiedName ACTION_PROVIDE_DISCOUNT_FOR_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, ACTION_PROVIDE_DISCOUNT_FOR_PRODUCT);
-
-    // Function
-    public static final String FUNCTION_COUNT_CATEGORIES = "CountCategories";
-    public static final FullQualifiedName FUNCTION_COUNT_CATEGORIES_FQN
-            = new FullQualifiedName(NAMESPACE, FUNCTION_COUNT_CATEGORIES);
-    //Bound Function
-    public static final String FUNCTION_PROVIDE_DISCOUNT = "GetDiscountProducts";
-    public static final FullQualifiedName FUNCTION_PROVIDE_DISCOUNT_FQN = new FullQualifiedName(NAMESPACE, FUNCTION_PROVIDE_DISCOUNT);
-
-    public static final String FUNCTION_PROVIDE_DISCOUNT_FOR_PRODUCT = "GetDiscountProduct";
-    public static final FullQualifiedName FUNCTION_PROVIDE_DISCOUNT_FOR_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, FUNCTION_PROVIDE_DISCOUNT_FOR_PRODUCT);
-
-    // Function/Action Parameters
-    public static final String PARAMETER_AMOUNT = "Amount";
-
-    //Bound Action Binding Parameter
-    public static final String PARAMETER_CATEGORY = "ParamCategory";
-
-    //Bound Function Binding Parameter
-    public static final String PARAMETER_BIND = "BindingParameter";
-//
-//    public static final FullQualifiedName CONTAINER = new FullQualifiedName(Contains.NAME_SPACE, Contains.CONTAINER_NAME);
+public class EdmProvider extends CsdlAbstractEdmProvider {
+    public static final FullQualifiedName CONTAINER = new FullQualifiedName(Contains.NAME_SPACE, Contains.CONTAINER_NAME);
 
     @Resource
     private CommonProcessor commonProcessor;
@@ -144,19 +91,16 @@ public class InitEdmProvider extends CsdlAbstractEdmProvider {
 
 
             // add EntityContainer
-
             schema.setEntityContainer(getEntityContainer());
 
-
-            List<CsdlSchema> schemas = new ArrayList<>();
-            schemas.add(schema);
-            return schemas;
+            return Collections.singletonList(schema);
         } catch (Exception e) {
             log.error("InitEdmProvider.getSchemas has error msg:", e);
         }
         return null;
     }
 
+    @Override
     public CsdlEntityContainer getEntityContainer() {
         try {
             CsdlEntityContainer entityContainer = new CsdlEntityContainer();
@@ -235,12 +179,12 @@ public class InitEdmProvider extends CsdlAbstractEdmProvider {
 
 
     @Override
-    public List<CsdlAction> getActions(final FullQualifiedName actionName) {
+    public List<CsdlAction> getActions(FullQualifiedName actionName) {
         return commonProcessor.getServiceMap().get(actionName.getName()).getActions(actionName);
     }
 
     @Override
-    public CsdlActionImport getActionImport(final FullQualifiedName entityContainer, String actionImportName) {
+    public CsdlActionImport getActionImport(FullQualifiedName entityContainer, String actionImportName) {
         return commonProcessor.getServiceMap().get(entityContainer.getName()).getActionImport(entityContainer, actionImportName);
     }
 
