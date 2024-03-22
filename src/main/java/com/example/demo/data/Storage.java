@@ -32,7 +32,6 @@ import org.apache.olingo.commons.api.http.HttpMethod;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.uri.UriParameter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -58,7 +57,7 @@ public class Storage {
 
         // actually, this is only required if we have more than one Entity Sets
 //        if (edmEntitySet.getName().equals(InitEdmProvider.ES_PRODUCTS_NAME)) {
-            return getProducts();
+        return getProducts();
 //        }
 
 //        return null;
@@ -70,7 +69,7 @@ public class Storage {
 
         // actually, this is only required if we have more than one Entity Type
 //        if (edmEntityType.getName().equals(InitEdmProvider.ET_PRODUCT_NAME)) {
-            return getProduct(edmEntityType, keyParams);
+        return getProduct(edmEntityType, keyParams);
 //        }
 
 //        return null;
@@ -82,7 +81,7 @@ public class Storage {
 
         // actually, this is only required if we have more than one Entity Type
 //        if (edmEntityType.getName().equals(InitEdmProvider.ET_PRODUCT_NAME)) {
-            return createProduct(edmEntityType, entityToCreate);
+        return createProduct(edmEntityType, entityToCreate);
 //        }
 
 //        return null;
@@ -98,7 +97,7 @@ public class Storage {
 
         // actually, this is only required if we have more than one Entity Type
 //        if (edmEntityType.getName().equals(InitEdmProvider.ET_PRODUCT_NAME)) {
-            updateProduct(edmEntityType, keyParams, updateEntity, httpMethod);
+        updateProduct(edmEntityType, keyParams, updateEntity, httpMethod);
 //        }
     }
 
@@ -109,7 +108,7 @@ public class Storage {
 
         // actually, this is only required if we have more than one Entity Type
 //        if (edmEntityType.getName().equals(InitEdmProvider.ET_PRODUCT_NAME)) {
-            deleteProduct(edmEntityType, keyParams);
+        deleteProduct(edmEntityType, keyParams);
 //        }
     }
 

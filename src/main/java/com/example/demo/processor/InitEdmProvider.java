@@ -18,13 +18,15 @@
  */
 package com.example.demo.processor;
 
-import cn.hutool.core.lang.ClassScanner;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.example.demo.contains.Contains;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
@@ -35,6 +37,9 @@ import org.springframework.util.ClassUtils;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 /*
@@ -45,18 +50,13 @@ import java.util.*;
 @Component
 @Slf4j
 public class InitEdmProvider extends CsdlAbstractEdmProvider {
-
-    // Service Namespace
-
-    public static String NAMESPACE = "OData.Demo";
-
-    // EDM Container
-
-    public static String CONTAINER_NAME = "Container";
     public final static String ENTITY_PACKAGE = "com.example.demo.entity";
     public static List<String> ENTITY_NAME_LIST = new ArrayList<>();
     public static List<Map<String, Field[]>> ENTITY_BEAN_LIST = new ArrayList<>();
-    public static final FullQualifiedName CONTAINER = new FullQualifiedName(NAMESPACE, CONTAINER_NAME);
+    public static final FullQualifiedName CONTAINER = new FullQualifiedName(Contains.NAME_SPACE, Contains.CONTAINER_NAME);
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
 
     @PostConstruct
@@ -88,11 +88,11 @@ public class InitEdmProvider extends CsdlAbstractEdmProvider {
     @Override
     public List<CsdlSchema> getSchemas() {
         CsdlSchema schema = new CsdlSchema();
-        schema.setNamespace(NAMESPACE);
+        schema.setNamespace(Contains.NAME_SPACE);
 
         List<CsdlEntityType> entityTypes = new ArrayList<>();
         for (String strClass : ENTITY_NAME_LIST) {
-            entityTypes.add(getEntityType(new FullQualifiedName(NAMESPACE, strClass)));
+            entityTypes.add(getEntityType(new FullQualifiedName(Contains.NAME_SPACE, strClass)));
         }
 
         schema.setEntityTypes(entityTypes);
@@ -105,6 +105,40 @@ public class InitEdmProvider extends CsdlAbstractEdmProvider {
         return schemas;
     }
 
+    private List<CsdlProperty> getEntityType(Field[] declaredFields) {
+        List<CsdlProperty> csdlPropertyArrayList = new ArrayList<>();
+        for (Field field : declaredFields) {
+            field.setAccessible(true);
+            Class<?> type = field.getType();
+            if (List.class.isAssignableFrom(type)) {
+                ParameterizedType listType = (ParameterizedType) field.getGenericType();
+                Class<?> elementType = (Class<?>) listType.getActualTypeArguments()[0];
+                if (elementType != null) {
+                    List<CsdlProperty> sublistProperties = getEntityType(elementType.getDeclaredFields());
+                    csdlPropertyArrayList.addAll(sublistProperties);
+                }
+            } else {
+                csdlPropertyArrayList.add(
+                        new CsdlProperty()
+                                .setName(field.getName().toUpperCase())
+                                .setType(getFullQualifiedName(type.getName()))
+                );
+            }
+
+        }
+
+        return csdlPropertyArrayList;
+    }
+
+    private List<CsdlPropertyRef> getEntityTypeKey(Field[] declaredFields) {
+        CsdlPropertyRef propertyRef = new CsdlPropertyRef();
+        for (Field field : declaredFields) {
+            if (field.isAnnotationPresent(TableId.class)) {
+                propertyRef.setName(field.getName());
+            }
+        }
+        return Collections.singletonList(propertyRef);
+    }
 
     @Override
     public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) {
@@ -117,37 +151,45 @@ public class InitEdmProvider extends CsdlAbstractEdmProvider {
                     .map(x -> x.get(entityName))
                     .findFirst().orElseThrow(RuntimeException::new);
 
-            ArrayList<CsdlProperty> csdlPropertyArrayList = new ArrayList<>();
-            CsdlPropertyRef propertyRef = new CsdlPropertyRef();
-
-            for (Field field : declaredFields) {
-                if (field.isAnnotationPresent(TableId.class)) {
-                    propertyRef.setName(field.getName().toUpperCase());
-                }
-                field.setAccessible(true);
-                Class<?> type = field.getType();
-                csdlPropertyArrayList.add(
-                        new CsdlProperty()
-                                .setName(field.getName().toUpperCase())
-                                .setType(getFullQualifiedName(type.getName()))
-                );
-            }
-
             entityType.setName(entityTypeName.getName());
-            entityType.setProperties(csdlPropertyArrayList);
-            entityType.setKey(Collections.singletonList(propertyRef));
+            entityType.setProperties(getEntityType(declaredFields));
+            entityType.setKey(getEntityTypeKey(declaredFields));
+
+
+            try {
+                Object bean = applicationContext.getBean(StrUtil.lowerFirst(entityTypeName.getName()) + "Service");
+                Class<?> serviceClass = bean.getClass();
+                Method method = serviceClass.getDeclaredMethod("getNavigation");
+                method.setAccessible(true);
+                List<CsdlNavigationProperty> properties = (List<CsdlNavigationProperty>) method.invoke(bean);
+                if (Objects.nonNull(properties)) {
+                    entityType.setNavigationProperties(properties);
+                }
+            } catch (NoSuchMethodException e) {
+                System.err.println("Method not found: " + e.getMessage());
+            } catch (IllegalAccessException e) {
+                System.err.println("Illegal access: " + e.getMessage());
+            } catch (InvocationTargetException e) {
+                System.err.println("Invocation target exception: " + e.getMessage());
+            }
         } catch (Exception e) {
             log.error(e.toString());
             throw new RuntimeException(e);
         }
-
         return entityType;
-
-
     }
 
     private FullQualifiedName getFullQualifiedName(String fieldType) {
         switch (fieldType) {
+            case "java.math.BigDecimal":
+                return EdmPrimitiveTypeKind.Decimal.getFullQualifiedName();
+            case "byte":
+                return EdmPrimitiveTypeKind.Byte.getFullQualifiedName();
+            case "java.util.Date":
+                return EdmPrimitiveTypeKind.Date.getFullQualifiedName();
+            case "double":
+            case "java.lang.Double":
+                return EdmPrimitiveTypeKind.Double.getFullQualifiedName();
             case "int":
             case "java.lang.Integer":
                 return EdmPrimitiveTypeKind.Int32.getFullQualifiedName();
@@ -157,6 +199,7 @@ public class InitEdmProvider extends CsdlAbstractEdmProvider {
             case "boolean":
             case "java.lang.Boolean":
                 return EdmPrimitiveTypeKind.Boolean.getFullQualifiedName();
+            case "char":
             case "java.lang.String":
             default:
                 return EdmPrimitiveTypeKind.String.getFullQualifiedName();
@@ -166,15 +209,27 @@ public class InitEdmProvider extends CsdlAbstractEdmProvider {
 
     @Override
     public CsdlEntitySet getEntitySet(FullQualifiedName entityContainer, String entitySetName) {
-
-        if (entityContainer.equals(CONTAINER)) {
-            CsdlEntitySet entitySet = new CsdlEntitySet();
-            entitySet.setName(entitySetName);
-            entitySet.setType(getAllFullQualifiedName(entitySetName));
-            return entitySet;
+        CsdlEntitySet entitySet = new CsdlEntitySet();
+        entitySet.setName(entitySetName);
+        entitySet.setType(getAllFullQualifiedName(entitySetName));
+        try {
+            Object bean = applicationContext.getBean(StrUtil.lowerFirst(entitySetName) + "Service");
+            Class<?> serviceClass = bean.getClass();
+            Method method = serviceClass.getDeclaredMethod("getPath");
+            method.setAccessible(true);
+            List<CsdlNavigationPropertyBinding> properties = (List<CsdlNavigationPropertyBinding>) method.invoke(bean);
+            if (Objects.nonNull(properties)) {
+                entitySet.setNavigationPropertyBindings(properties);
+            }
+        } catch (NoSuchMethodException e) {
+            System.err.println("Method not found: " + e.getMessage());
+        } catch (IllegalAccessException e) {
+            System.err.println("Illegal access: " + e.getMessage());
+        } catch (InvocationTargetException e) {
+            System.err.println("Invocation target exception: " + e.getMessage());
         }
+        return entitySet;
 
-        return null;
 
     }
 
@@ -188,7 +243,7 @@ public class InitEdmProvider extends CsdlAbstractEdmProvider {
 
         // create EntityContainer
         CsdlEntityContainer entityContainer = new CsdlEntityContainer();
-        entityContainer.setName(CONTAINER_NAME);
+        entityContainer.setName(Contains.CONTAINER_NAME);
         entityContainer.setEntitySets(entitySets);
 
         return entityContainer;
@@ -206,6 +261,6 @@ public class InitEdmProvider extends CsdlAbstractEdmProvider {
     }
 
     private FullQualifiedName getAllFullQualifiedName(String name) {
-        return new FullQualifiedName(NAMESPACE, name);
+        return new FullQualifiedName(Contains.NAME_SPACE, name);
     }
 }

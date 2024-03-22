@@ -6,7 +6,7 @@ odata:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/ry?characterEncoding=UTF-8&allowMultiQueries=true
+    url: jdbc:mysql://localhost:3306/odata?characterEncoding=UTF-8&allowMultiQueries=true
     password: binbin0202
     username: root
 mybatis-plus:

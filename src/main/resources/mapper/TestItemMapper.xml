@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.TestItemMapper">
+    <resultMap type="com.example.demo.entity.TestItemEntity" id="TestItemMap">
+        <result property="ID" column="ID"/>
+        <result property="NAME" column="NAME"/>
+        <result property="TEST_ID" column="TEST_ID"/>
+    </resultMap>
+
+    <sql id="base_column">
+        `test_item`.`ID`,
+        `test_item`.`NAME`,
+        `test_item`.`TEST_ID`
+    </sql>
+
+    <sql id="table_name">`test_item`</sql>
+
+    <sql id="base_where">
+        <if test="arg.ID != null">
+            and `ID` = #{arg.ID}
+        </if>
+        <if test="arg.NAME != null and arg.NAME != ''">
+            and `NAME` = #{arg.NAME}
+        </if>
+        <if test="arg.TEST_ID != null">
+            and `TEST_ID` = #{arg.TEST_ID}
+        </if>
+    </sql>
+
+    <select id="selectByCondition" resultMap="TestItemMap">
+        select
+        <include refid="base_column"/>
+        from
+        <include refid="table_name"/>
+        <if test="arg.join !=null">
+            <foreach collection="arg.join" item="item">
+                JOIN ${item.tableName} ON `test_item`.TEST_ID = ${item.tableName}.${item.field}
+            </foreach>
+        </if>
+        <where>
+            <if test="arg.filter != null and arg.filter != ''">
+                ${arg.filter}
+            </if>
+            <if test="arg.filter == null and arg.filter == ''">
+                <include refid="base_where"/>
+            </if>
+            <if test="arg.join != null">
+                <foreach collection="arg.join" item="item">
+                    and `test_item`.TEST_ID = ${item.value}
+                </foreach>
+            </if>
+        </where>
+        <if test="arg.orderBy != null and arg.orderBy != ''">
+            ORDER BY ${arg.orderBy}
+        </if>
+        <if test="arg.offset != null and arg.count != null">
+            LIMIT #{arg.offset} ,#{arg.count}
+        </if>
+        <if test="arg.offset == null and arg.count != null">
+            LIMIT #{arg.count}
+        </if>
+    </select>
+
+    <update id="updateBatch">
+        <foreach collection="arg" item="item">
+            update
+            <include refid="table_name"/>
+            <set>
+                <trim suffixOverrides="," prefixOverrides=",">
+                    <if test="arg.ID != null">
+                        `ID `= #{arg.ID},
+                    </if>
+                    <if test="arg.NAME != null and arg.NAME != ''">
+                        `NAME `= #{arg.NAME},
+                    </if>
+                    <if test="arg.TEST_ID != null">
+                        `TEST_ID `= #{arg.TEST_ID}
+                    </if>
+                </trim>
+            </set>
+            <where>ID = #{item.ID}</where>
+        </foreach>
+    </update>
+
+    <insert id="insertByCondition" keyProperty="id" parameterType="com.example.demo.entity.TestItemEntity"
+            useGeneratedKeys="true">
+        insert into
+        <include refid="table_name"/>
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="arg.NAME != null and arg.NAME != ''">
+                `NAME`,
+            </if>
+            <if test="arg.TEST_ID != null">
+                `TEST_ID`,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")">
+            <if test="arg.NAME != null and arg.NAME != ''">
+                #{arg.NAME},
+            </if>
+            <if test="arg.TEST_ID != null">
+                #{arg.TEST_ID}
+            </if>
+        </trim>
+    </insert>
+</mapper>
+

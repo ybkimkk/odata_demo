@@ -10,17 +10,16 @@ import lombok.EqualsAndHashCode;
 
 /**
  * @author jinyongbin
- * @since 2024-03-19 13:35:48
+ * @since  2024-03-21 11:57:19
  */
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("test")
-public class TestEntity extends CommonEntity {
+@TableName("test_item")
+public class TestItemEntity extends CommonEntity {
     @TableId(type = IdType.AUTO)
     private Long ID;
     private String NAME;
-    private Long AGE;
-    private String PRICE;
+    private Long TEST_ID;
 }
 

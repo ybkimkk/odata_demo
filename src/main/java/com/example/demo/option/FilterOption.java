@@ -28,9 +28,8 @@ public class FilterOption implements CommonOption {
                 }
             }
             text = getLikeSql(text);
+            log.info(text);
             query.put("filter", text);
-            log.error(text);
-
         }
     }
 

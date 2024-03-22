@@ -1,14 +1,20 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.TestEntity;
+import org.apache.olingo.commons.api.edm.provider.CsdlNavigationProperty;
+import org.apache.olingo.commons.api.edm.provider.CsdlNavigationPropertyBinding;
 
 import java.util.List;
 import java.util.Map;
 
-public interface CommonService {
-    List<TestEntity> selectByCondition(Map<String, Object> arg) throws NullPointerException;
-    TestEntity insert(Map<String, Object> arg) throws NullPointerException;
+public interface CommonService<T> {
+    List<T> selectByCondition(Map<String, Object> arg) throws NullPointerException;
 
-    TestEntity update(Map<String, Object> arg) throws NullPointerException;
+    T insert(Map<String, Object> arg) throws NullPointerException;
+
+    T update(Map<String, Object> arg) throws NullPointerException;
+
     int delete(String id) throws NullPointerException;
+
+    List<CsdlNavigationProperty> getNavigation();
+    List<CsdlNavigationPropertyBinding>  getPath();
 }

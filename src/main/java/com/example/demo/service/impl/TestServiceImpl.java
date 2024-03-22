@@ -2,17 +2,17 @@ package com.example.demo.service.impl;
 
 import cn.hutool.core.convert.Convert;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.example.demo.contains.Contains;
 import com.example.demo.entity.TestEntity;
-import com.example.demo.entity.common.R;
 import com.example.demo.mapper.TestMapper;
 import com.example.demo.service.TestService;
 import lombok.RequiredArgsConstructor;
+import org.apache.olingo.commons.api.edm.FullQualifiedName;
+import org.apache.olingo.commons.api.edm.provider.CsdlNavigationProperty;
+import org.apache.olingo.commons.api.edm.provider.CsdlNavigationPropertyBinding;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author jinyongbin
@@ -51,5 +51,27 @@ public class TestServiceImpl implements TestService {
     @Override
     public int delete(String id) throws NullPointerException {
         return testMapper.deleteById(id);
+    }
+
+    @Override
+    public List<CsdlNavigationProperty> getNavigation() {
+        List<CsdlNavigationProperty> navPropList = new ArrayList<>();
+        CsdlNavigationProperty navProp = new CsdlNavigationProperty()
+                .setName("TestItem")
+                .setType(new FullQualifiedName(Contains.NAME_SPACE, "TestItem"))
+                .setCollection(true)
+                .setPartner("Test");
+        navPropList.add(navProp);
+        return navPropList;
+    }
+
+    @Override
+    public List<CsdlNavigationPropertyBinding> getPath() {
+        CsdlNavigationPropertyBinding navPropBinding = new CsdlNavigationPropertyBinding();
+        navPropBinding.setTarget("TestItem");//target entitySet, where the nav prop points to
+        navPropBinding.setPath("TestItem"); // the path from entity type to navigation property
+        List<CsdlNavigationPropertyBinding> navPropBindingList = new ArrayList<>();
+        navPropBindingList.add(navPropBinding);
+        return navPropBindingList;
     }
 }

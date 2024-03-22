@@ -113,4 +113,26 @@ public class Util {
 
         return true;
     }
+
+    public static EdmEntitySet getNavigationTargetEntitySet(EdmEntitySet startEdmEntitySet, EdmNavigationProperty edmNavigationProperty)
+            throws ODataApplicationException {
+
+        EdmEntitySet navigationTargetEntitySet = null;
+
+        String navPropName = edmNavigationProperty.getName();
+        EdmBindingTarget edmBindingTarget = startEdmEntitySet.getRelatedBindingTarget(navPropName);
+        if (edmBindingTarget == null) {
+            throw new ODataApplicationException("Not supported.",
+                    HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+        }
+
+        if (edmBindingTarget instanceof EdmEntitySet) {
+            navigationTargetEntitySet = (EdmEntitySet) edmBindingTarget;
+        } else {
+            throw new ODataApplicationException("Not supported.",
+                    HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+        }
+
+        return navigationTargetEntitySet;
+    }
 }

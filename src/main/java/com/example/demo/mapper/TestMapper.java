@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface TestMapper extends BaseMapper<TestEntity> {
     Long insertByCondition(@Param("arg") TestEntity arg);
+
     Long updateBatch(@Param("arg") List<TestEntity> arg);
 
     List<TestEntity> selectByCondition(@Param("arg") TestEntity arg);

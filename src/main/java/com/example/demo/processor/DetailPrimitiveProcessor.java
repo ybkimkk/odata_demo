@@ -23,6 +23,7 @@ import com.example.demo.data.Storage;
 import lombok.RequiredArgsConstructor;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
+import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveType;
@@ -40,12 +41,14 @@ import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.*;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class DemoPrimitiveProcessor implements PrimitiveProcessor {
+public class DetailPrimitiveProcessor extends CommonEntityProcessor implements PrimitiveProcessor {
 
     private OData odata;
     private final Storage storage;
@@ -88,14 +91,23 @@ public class DemoPrimitiveProcessor implements PrimitiveProcessor {
 
         // 2. retrieve data from backend
         // 2.1. retrieve the entity data, for which the property has to be read
+        //--------------------------------------------------------------------------------------------------------------
+        Map<String, Object> sql = new HashMap<>();
+        for (UriParameter keyPredicate : keyPredicates) {
+            sql.put(keyPredicate.getName(),keyPredicate.getText());
+        }
+        List<Object> testEntities = getService(edmEntitySet.getName()).selectByCondition(sql);
+        EntityCollection entityCollection = getEntityCollection(testEntities);
+        Entity createdEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
+        //--------------------------------------------------------------------------------------------------------------
         Entity entity = storage.readEntityData(edmEntitySet, keyPredicates);
-        if (entity == null) { // Bad request
+        if (createdEntity == null) { // Bad request
             throw new ODataApplicationException("Entity not found",
                     HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);
         }
 
         // 2.2. retrieve the property data from the entity
-        Property property = entity.getProperty(edmPropertyName);
+        Property property = createdEntity.getProperty(edmPropertyName);
         if (property == null) {
             throw new ODataApplicationException("Property not found",
                     HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);

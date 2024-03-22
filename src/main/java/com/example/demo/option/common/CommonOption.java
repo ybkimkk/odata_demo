@@ -4,7 +4,6 @@ import org.apache.olingo.server.api.ODataApplicationException;
 import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions;
 import org.apache.olingo.server.api.uri.UriInfo;
 
-import java.util.List;
 import java.util.Map;
 
 public interface CommonOption {

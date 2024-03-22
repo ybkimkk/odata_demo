@@ -20,12 +20,13 @@ package com.example.demo.processor;
 
 
 import com.example.demo.option.common.CommonOption;
+import com.example.demo.util.Util;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.core.ApplicationContext;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
+import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
@@ -35,20 +36,11 @@ import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.serializer.SerializerResult;
-import org.apache.olingo.server.api.uri.UriInfo;
-import org.apache.olingo.server.api.uri.UriResource;
-import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.*;
 import org.apache.olingo.server.api.uri.queryoption.CountOption;
-import org.apache.olingo.server.api.uri.queryoption.SelectOption;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.OrderComparator;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -66,30 +58,53 @@ public class ListEntityCollectionProcessor extends CommonEntityProcessor impleme
 
     public void readEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) throws ODataApplicationException, SerializerException {
 
-        // 1st retrieve the requested EntitySet from the uriInfo (representation of the parsed URI)
-        List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
-        // in our example, the first segment is the EntitySet
-        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0);
-        EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
-
-        // 2nd: fetch the data from backend for this requested EntitySetName
-        // it has to be delivered as EntitySet object
-
         //----------------------------------------自定义----------------------------------------------
-
-        ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).build();
-        final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
-        EntityCollectionSerializerOptions.Builder builder = EntityCollectionSerializerOptions
-                .with()
-                .id(id)
-                .contextURL(contextUrl);
+        EdmEntitySet responseEdmEntitySet = null; // we'll need this to build the ContextURL
+        List<UriResource> resourceParts = uriInfo.getUriResourceParts();
+        int segmentCount = resourceParts.size();
+        UriResource uriResource = resourceParts.get(0);
+        if (!(uriResource instanceof UriResourceEntitySet)) {
+            throw new ODataApplicationException("Only EntitySet is supported",
+                    HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+        }
+        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriResource;
+        EdmEntitySet startEdmEntitySet = uriResourceEntitySet.getEntitySet();
         Map<String, Object> query = new HashMap<>();
+        String tableName = "";
+        if (segmentCount == 1) {
+            responseEdmEntitySet = startEdmEntitySet;
+            tableName = responseEdmEntitySet.getName();
+        } else if (segmentCount == 2) {
+            UriResource lastSegment = resourceParts.get(1);
+            if (lastSegment instanceof UriResourceNavigation) {
+                UriResourceNavigation uriResourceNavigation = (UriResourceNavigation) lastSegment;
+                EdmNavigationProperty edmNavigationProperty = uriResourceNavigation.getProperty();
+                responseEdmEntitySet = Util.getNavigationTargetEntitySet(startEdmEntitySet, edmNavigationProperty);
+                List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
+                tableName = lastSegment.getSegmentValue();
+                List<Map<String, String>> map = new ArrayList<>();
+                Map<String, String> join = new HashMap<>();
+                join.put("tableName", startEdmEntitySet.getName().toLowerCase());
+                join.put("field", keyPredicates.get(0).getName());
+                join.put("value", keyPredicates.get(0).getText());
+                map.add(join);
+                query.put("join", map);
+            }
+        } else {
+            throw new ODataApplicationException("Not supported", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+        }
+
+        ContextURL contextUrl = ContextURL.with().entitySet(responseEdmEntitySet).build();
+        final String id = request.getRawBaseUri() + "/" + responseEdmEntitySet.getName();
+        EntityCollectionSerializerOptions.Builder builder = EntityCollectionSerializerOptions.with()
+                .id(id).contextURL(contextUrl);
+
         Map<String, CommonOption> options = applicationContext.getBeansOfType(CommonOption.class);
         for (CommonOption value : options.values()) {
             value.filter(builder, uriInfo, query);
         }
 
-        List<?> sqlResult = getService(edmEntitySet.getName()).selectByCondition(query);
+        List<?> sqlResult = getService(tableName).selectByCondition(query);
 
         EntityCollection entityCollection = getEntityCollection(sqlResult);
         CountOption countOption = uriInfo.getCountOption();
@@ -101,7 +116,7 @@ public class ListEntityCollectionProcessor extends CommonEntityProcessor impleme
         ODataSerializer serializer = odata.createSerializer(responseFormat);
 
         // and serialize the content: transform from the EntitySet object to InputStream
-        EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+        EdmEntityType edmEntityType = responseEdmEntitySet.getEntityType();
 
         EntityCollectionSerializerOptions opts = builder.build();
         SerializerResult serializedContent = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);

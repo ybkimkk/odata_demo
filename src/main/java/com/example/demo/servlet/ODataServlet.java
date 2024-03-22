@@ -26,11 +26,10 @@ public class ODataServlet extends HttpServlet {
     private DetailEntityProcessor entityProcessor;
 
     @Autowired
-    private DemoPrimitiveProcessor primitiveProcessor;
+    private DetailPrimitiveProcessor primitiveProcessor;
 
     @Autowired
     private DemoBatchProcessor batchProcessor;
-
 
     @Autowired
     private InitEdmProvider initEdmProvider;

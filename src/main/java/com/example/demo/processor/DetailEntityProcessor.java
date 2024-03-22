@@ -19,18 +19,17 @@
 package com.example.demo.processor;
 
 
-import com.example.demo.data.Storage;
-import com.example.demo.entity.TestEntity;
 import com.example.demo.util.Util;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
+import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
-import org.apache.olingo.commons.api.http.HttpMethod;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.*;
 import org.apache.olingo.server.api.deserializer.DeserializerException;
@@ -41,20 +40,19 @@ import org.apache.olingo.server.api.serializer.EntitySerializerOptions;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.serializer.SerializerResult;
-import org.apache.olingo.server.api.uri.UriInfo;
-import org.apache.olingo.server.api.uri.UriParameter;
-import org.apache.olingo.server.api.uri.UriResource;
-import org.apache.olingo.server.api.uri.UriResourceEntitySet;
-import org.apache.olingo.server.core.uri.UriInfoImpl;
-import org.apache.olingo.server.core.uri.UriResourceEntitySetImpl;
+import org.apache.olingo.server.api.uri.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DetailEntityProcessor extends CommonEntityProcessor implements EntityProcessor {
 
     private OData odata;
@@ -70,26 +68,32 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
     }
 
 
-    public void readEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) throws SerializerException {
+    public void readEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) throws SerializerException, ODataApplicationException {
 
         // 1. retrieve the Entity Type
         List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
         // Note: only in our example we can assume that the first segment is the EntitySet
-        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0);
-        EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
-        // 2. retrieve the data from backend
-        List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-
 
         //--------------------------------------------------------------------------------------------------------------
+        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0);
+        List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
+        EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
+        EdmEntityType entityType = edmEntitySet.getEntityType();
+        if (resourcePaths.get(resourcePaths.size() - 1) instanceof UriResourceNavigation) {
+            UriResourceNavigation uriResourceNavigation = (UriResourceNavigation) resourcePaths.get(resourcePaths.size() - 1);
+            EdmNavigationProperty property = uriResourceNavigation.getProperty();
+            entityType = property.getType();
+            edmEntitySet = Util.getNavigationTargetEntitySet(edmEntitySet, property);
+        }
+
         Map<String, Object> query = new HashMap<>();
-        query.put(keyPredicates.get(0).getName().toLowerCase(), Integer.valueOf(keyPredicates.get(0).getText()));
+        query.put(keyPredicates.get(0).getName(), Integer.valueOf(keyPredicates.get(0).getText()));
         EntityCollection entityCollection = getEntityCollection(getService(edmEntitySet.getName()).selectByCondition(query));
         //--------------------------------------------------------------------------------------------------------------
 
 
         // 3. serialize
-        EdmEntityType entityType = edmEntitySet.getEntityType();
+
 
         ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).suffix(ContextURL.Suffix.ENTITY).build();
         // expand and select currently not supported
@@ -133,7 +137,7 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
 
 
         //--------------------------------------------------------------------------------------------------------------
-        TestEntity insert = getService(edmEntitySet.getName()).insert(getMapByEntity(result.getEntity()));
+        Object insert = getService(edmEntitySet.getName()).insert(getMapByEntity(result.getEntity()));
         EntityCollection entityCollection = getEntityCollection(Collections.singletonList(insert));
         Entity createdEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
         //--------------------------------------------------------------------------------------------------------------
@@ -177,7 +181,7 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
         UriParameter uriParameter = keyPredicates.stream().findFirst().orElse(null);
         Map<String, Object> mapByEntity = getMapByEntity(result.getEntity());
         mapByEntity.put("ID", uriParameter.getText());
-        TestEntity insert = getService(edmEntitySet.getName()).update(mapByEntity);
+        Object insert = getService(edmEntitySet.getName()).update(mapByEntity);
         EntityCollection entityCollection = getEntityCollection(Collections.singletonList(insert));
         Entity requestEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
 

@@ -5,7 +5,7 @@ import lombok.Data;
 
 /**
  * @author jinyongbin
- * @since  2024-03-19 13:35:48
+ * @since 2024-03-19 13:35:48
  */
 @Data
 @AllArgsConstructor
