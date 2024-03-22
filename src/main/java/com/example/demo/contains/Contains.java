@@ -1,10 +1,12 @@
 package com.example.demo.contains;
 
-import lombok.Getter;
-
-@Getter
 public class Contains {
-    public final static String NAME_SPACE = "OData.Demo";
+
+    public static String PACKAGE = "com.example.demo";
+
+    public static String NAME_SPACE = " OData.Demo";
 
     public static String CONTAINER_NAME = "Container";
+
+    public static String ENTITY_PACKAGE = PACKAGE + ".entity";
 }

@@ -45,10 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -137,7 +134,7 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
 
 
         //--------------------------------------------------------------------------------------------------------------
-        Object insert = getService(edmEntitySet.getName()).insert(getMapByEntity(result.getEntity()));
+        Object insert = getService(edmEntitySet.getName()).insert(convertEntityToMap(result.getEntity()));
         EntityCollection entityCollection = getEntityCollection(Collections.singletonList(insert));
         Entity createdEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
         //--------------------------------------------------------------------------------------------------------------
@@ -161,7 +158,7 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
     }
 
 
-    public void updateEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat, ContentType responseFormat) throws DeserializerException, SerializerException {
+    public void updateEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat, ContentType responseFormat) throws DeserializerException, SerializerException, ODataApplicationException {
 
         // 1. Retrieve the entity set which belongs to the requested entity
         List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
@@ -179,11 +176,14 @@ public class DetailEntityProcessor extends CommonEntityProcessor implements Enti
         //--------------------------------------------------------------------------------------------------------------
         List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
         UriParameter uriParameter = keyPredicates.stream().findFirst().orElse(null);
-        Map<String, Object> mapByEntity = getMapByEntity(result.getEntity());
+        Map<String, Object> mapByEntity = convertEntityToMap(result.getEntity());
         mapByEntity.put("ID", uriParameter.getText());
         Object insert = getService(edmEntitySet.getName()).update(mapByEntity);
         EntityCollection entityCollection = getEntityCollection(Collections.singletonList(insert));
-        Entity requestEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
+        Entity requestEntity = entityCollection.getEntities()
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new ODataApplicationException("DetailEntityProcessor has error", 500, Locale.ROOT));
 
 
         ODataSerializer serializer = this.odata.createSerializer(responseFormat);

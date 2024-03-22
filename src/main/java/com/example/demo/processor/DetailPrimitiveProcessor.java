@@ -68,9 +68,7 @@ public class DetailPrimitiveProcessor extends CommonEntityProcessor implements P
      *	  value: "Notebook Basic 15"
      * }
      * */
-    public void readPrimitive(ODataRequest request, ODataResponse response,
-                              UriInfo uriInfo, ContentType responseFormat)
-            throws ODataApplicationException, SerializerException {
+    public void readPrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) throws ODataApplicationException, SerializerException {
 
         // 1. Retrieve info from URI
         // 1.1. retrieve the info about the requested entity set
@@ -94,7 +92,7 @@ public class DetailPrimitiveProcessor extends CommonEntityProcessor implements P
         //--------------------------------------------------------------------------------------------------------------
         Map<String, Object> sql = new HashMap<>();
         for (UriParameter keyPredicate : keyPredicates) {
-            sql.put(keyPredicate.getName(),keyPredicate.getText());
+            sql.put(keyPredicate.getName(), keyPredicate.getText());
         }
         List<Object> testEntities = getService(edmEntitySet.getName()).selectByCondition(sql);
         EntityCollection entityCollection = getEntityCollection(testEntities);
@@ -138,14 +136,11 @@ public class DetailPrimitiveProcessor extends CommonEntityProcessor implements P
      * These processor methods are not handled in this tutorial
      *
      * */
-    public void updatePrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo,
-                                ContentType requestFormat, ContentType responseFormat)
-            throws ODataApplicationException, DeserializerException, SerializerException {
-        throw new ODataApplicationException("Not supported.", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+    public void updatePrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType requestFormat, ContentType responseFormat) throws ODataApplicationException, DeserializerException, SerializerException {
+        throw new ODataApplicationException("DetailPrimitiveProcessor.updatePrimitive Not supported.", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
     }
 
-    public void deletePrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo)
-            throws ODataApplicationException {
-        throw new ODataApplicationException("Not supported.", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+    public void deletePrimitive(ODataRequest request, ODataResponse response, UriInfo uriInfo) throws ODataApplicationException {
+        throw new ODataApplicationException("DetailPrimitiveProcessor.deletePrimitive Not supported.", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
     }
 }

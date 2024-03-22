@@ -41,7 +41,7 @@
             <if test="arg.filter != null and arg.filter != ''">
                 ${arg.filter}
             </if>
-            <if test="arg.filter == null and arg.filter == ''">
+            <if test="arg.filter == null or arg.filter == ''">
                 <include refid="base_where"/>
             </if>
             <if test="arg.join != null">

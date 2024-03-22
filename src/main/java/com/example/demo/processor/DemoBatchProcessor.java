@@ -21,6 +21,7 @@ package com.example.demo.processor;
 
 import com.example.demo.data.Storage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
@@ -83,6 +84,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DemoBatchProcessor implements BatchProcessor {
 
     private OData odata;
@@ -192,6 +194,7 @@ public class DemoBatchProcessor implements BatchProcessor {
             storage.rollbackTranscation();
             throw e;
         } catch (ODataLibraryException e) {
+            log.error("DemoBatchProcessor.processChangeSet has error:", e);
             // The request is malformed or the processor implementation is not correct.
             // Throwing an exception will stop the whole batch request not only the change set!
             storage.rollbackTranscation();

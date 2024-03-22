@@ -22,6 +22,7 @@ package com.example.demo.processor;
 import com.example.demo.option.common.CommonOption;
 import com.example.demo.util.Util;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
@@ -43,6 +44,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class ListEntityCollectionProcessor extends CommonEntityProcessor implements EntityCollectionProcessor {
 

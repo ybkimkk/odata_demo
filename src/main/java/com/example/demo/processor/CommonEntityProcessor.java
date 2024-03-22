@@ -1,7 +1,9 @@
 package com.example.demo.processor;
 
 import cn.hutool.core.util.StrUtil;
-import com.example.demo.service.CommonService;
+import com.alibaba.fastjson2.JSON;
+import com.example.demo.service.common.ICommonService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.data.Property;
@@ -17,23 +19,25 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@Slf4j
 public class CommonEntityProcessor {
 
     @Resource
     protected ApplicationContext applicationContext;
-    protected static Map<String, CommonService> SERVICE_MAP = new HashMap<>();
+    protected static Map<String, ICommonService<?>> SERVICE_MAP = new HashMap<>();
 
     @PostConstruct
     public void init() {
-        Map<String, CommonService> beansOfType = applicationContext.getBeansOfType(CommonService.class);
-        for (Map.Entry<String, CommonService> entry : beansOfType.entrySet()) {
-            CommonService commonService = entry.getValue();
-            SERVICE_MAP.put(StrUtil.upperFirst(entry.getKey().replace("Service", StrUtil.EMPTY)), commonService);
+
+        Map<String, ICommonService> beansOfType = applicationContext.getBeansOfType(ICommonService.class);
+        for (Map.Entry<String, ICommonService> entry : beansOfType.entrySet()) {
+            ICommonService ICommonService = entry.getValue();
+            SERVICE_MAP.put(StrUtil.upperFirst(entry.getKey().replace("Service", StrUtil.EMPTY)), ICommonService);
         }
     }
 
 
-    protected CommonService getService(String db) {
+    protected ICommonService getService(String db) {
         return SERVICE_MAP.get(db);
     }
 
@@ -46,7 +50,7 @@ public class CommonEntityProcessor {
                 retEntitySet.getEntities().add(editEntityValue(object, declaredFields));
             }
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            log.error("CommonEntityProcessor.getEntityCollection has error:{},param :{}", e, JSON.toJSONString(list));
         }
 
         return retEntitySet;
@@ -61,7 +65,7 @@ public class CommonEntityProcessor {
         return entity;
     }
 
-    protected Map<String, Object> getMapByEntity(Entity entity) {
+    protected Map<String, Object> convertEntityToMap(Entity entity) {
         Map<String, Object> stringObjectMap = new HashMap<>();
         for (Property property : entity.getProperties()) {
             stringObjectMap.put(property.getName(), property.getValue());

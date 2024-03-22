@@ -2,14 +2,14 @@ package com.example.demo.service.impl;
 
 import cn.hutool.core.convert.Convert;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.example.demo.contains.Contains;
 import com.example.demo.entity.TestEntity;
 import com.example.demo.mapper.TestMapper;
-import com.example.demo.service.TestService;
+import com.example.demo.service.ITestService;
+import com.example.demo.service.common.AbCommonService;
 import lombok.RequiredArgsConstructor;
+import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
-import org.apache.olingo.commons.api.edm.provider.CsdlNavigationProperty;
-import org.apache.olingo.commons.api.edm.provider.CsdlNavigationPropertyBinding;
+import org.apache.olingo.commons.api.edm.provider.*;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -19,9 +19,9 @@ import java.util.*;
  * @since 2024-03-19 13:35:48
  */
 
-@Service("testService")
+@Service("TestService")
 @RequiredArgsConstructor
-public class TestServiceImpl implements TestService {
+public class TestServiceImpl extends AbCommonService implements ITestService {
 
     private final TestMapper testMapper;
 
@@ -53,25 +53,41 @@ public class TestServiceImpl implements TestService {
         return testMapper.deleteById(id);
     }
 
+    //一对多
     @Override
-    public List<CsdlNavigationProperty> getNavigation() {
-        List<CsdlNavigationProperty> navPropList = new ArrayList<>();
-        CsdlNavigationProperty navProp = new CsdlNavigationProperty()
-                .setName("TestItem")
-                .setType(new FullQualifiedName(Contains.NAME_SPACE, "TestItem"))
-                .setCollection(true)
-                .setPartner("Test");
-        navPropList.add(navProp);
-        return navPropList;
+    public CsdlEntitySet getEntitySet(FullQualifiedName entityContainer, String entitySetName) {
+        CsdlEntitySet entitySet = new CsdlEntitySet();
+        entitySet.setName(entitySetName);
+        entitySet.setType(getAllFullQualifiedName(entitySetName));
+        CsdlNavigationPropertyBinding navPropBinding = new CsdlNavigationPropertyBinding();
+        navPropBinding.setTarget("TestItem");
+        navPropBinding.setPath("TestItem");
+        entitySet.setNavigationPropertyBindings(Collections.singletonList(navPropBinding));
+        return entitySet;
     }
 
     @Override
-    public List<CsdlNavigationPropertyBinding> getPath() {
-        CsdlNavigationPropertyBinding navPropBinding = new CsdlNavigationPropertyBinding();
-        navPropBinding.setTarget("TestItem");//target entitySet, where the nav prop points to
-        navPropBinding.setPath("TestItem"); // the path from entity type to navigation property
-        List<CsdlNavigationPropertyBinding> navPropBindingList = new ArrayList<>();
-        navPropBindingList.add(navPropBinding);
-        return navPropBindingList;
+    public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) {
+        CsdlEntityType entityType = new CsdlEntityType();
+        entityType.setName(entityTypeName.getName());
+        List<CsdlProperty> csdlPropertyArrayList = new ArrayList<>();
+        csdlPropertyArrayList.add(new CsdlProperty().setName("ID").setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName()));
+        csdlPropertyArrayList.add(new CsdlProperty().setName("NAME").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()));
+        csdlPropertyArrayList.add(new CsdlProperty().setName("AGE").setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName()));
+        csdlPropertyArrayList.add(new CsdlProperty().setName("PRICE").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()));
+        entityType.setProperties(csdlPropertyArrayList);
+        CsdlPropertyRef propertyRef = new CsdlPropertyRef();
+        propertyRef.setName("ID");
+        entityType.setKey(Collections.singletonList(propertyRef));
+        //一对多
+        List<CsdlNavigationProperty> navPropList = new ArrayList<>();
+        CsdlNavigationProperty navProp = new CsdlNavigationProperty()
+                .setName("TestItem")
+                .setType(getAllFullQualifiedName("TestItem"))
+                .setCollection(true)   //必须传
+                .setPartner("Test");
+        navPropList.add(navProp);
+        entityType.setNavigationProperties(navPropList);
+        return entityType;
     }
 }

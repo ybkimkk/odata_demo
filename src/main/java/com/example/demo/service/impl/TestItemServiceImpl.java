@@ -1,17 +1,18 @@
 package com.example.demo.service.impl;
 
 import cn.hutool.core.convert.Convert;
-import com.example.demo.contains.Contains;
 import com.example.demo.entity.TestItemEntity;
 import com.example.demo.mapper.TestItemMapper;
-import com.example.demo.service.TestItemService;
+import com.example.demo.service.ITestItemService;
+import com.example.demo.service.common.AbCommonService;
 import lombok.RequiredArgsConstructor;
+import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
-import org.apache.olingo.commons.api.edm.provider.CsdlNavigationProperty;
-import org.apache.olingo.commons.api.edm.provider.CsdlNavigationPropertyBinding;
+import org.apache.olingo.commons.api.edm.provider.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -20,9 +21,9 @@ import java.util.Map;
  * @since 2024-03-21 11:57:19
  */
 
-@Service("testItemService")
+@Service("TestItemService")
 @RequiredArgsConstructor
-public class TestItemServiceImpl implements TestItemService {
+public class TestItemServiceImpl extends AbCommonService implements ITestItemService {
 
 
     private final TestItemMapper testItemMapper;
@@ -49,20 +50,40 @@ public class TestItemServiceImpl implements TestItemService {
         return 0;
     }
 
+    //多对一
     @Override
-    public List<CsdlNavigationProperty> getNavigation() {
-        List<CsdlNavigationProperty> navPropList = new ArrayList<>();
-        CsdlNavigationProperty navProp = new CsdlNavigationProperty()
-                .setName("Test")
-                .setType(new FullQualifiedName(Contains.NAME_SPACE, "Test"))
-                .setNullable(true)
-                .setPartner("TestItem");
-        navPropList.add(navProp);
-        return navPropList;
+    public CsdlEntitySet getEntitySet(FullQualifiedName entityContainer, String entitySetName) {
+        CsdlEntitySet entitySet = new CsdlEntitySet();
+        entitySet.setName(entitySetName);
+        entitySet.setType(getAllFullQualifiedName(entitySetName));
+        CsdlNavigationPropertyBinding navPropBinding = new CsdlNavigationPropertyBinding();
+        navPropBinding.setTarget("Test");
+        navPropBinding.setPath("Test");
+        entitySet.setNavigationPropertyBindings(Collections.singletonList(navPropBinding));
+        return entitySet;
     }
 
     @Override
-    public List<CsdlNavigationPropertyBinding> getPath() {
-        return null;
+    public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) {
+        CsdlEntityType entityType = new CsdlEntityType();
+        entityType.setName(entityTypeName.getName());
+        List<CsdlProperty> csdlPropertyArrayList = new ArrayList<>();
+        csdlPropertyArrayList.add(new CsdlProperty().setName("ID").setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName()));
+        csdlPropertyArrayList.add(new CsdlProperty().setName("NAME").setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()));
+        csdlPropertyArrayList.add(new CsdlProperty().setName("TEST_ID").setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName()));
+        entityType.setProperties(csdlPropertyArrayList);
+        CsdlPropertyRef propertyRef = new CsdlPropertyRef();
+        propertyRef.setName("ID");
+        entityType.setKey(Collections.singletonList(propertyRef));
+
+        //多对一
+        CsdlNavigationProperty navProp = new CsdlNavigationProperty()
+                .setName("Test") //传连接目标
+                .setType(getAllFullQualifiedName("Test"))//传连接目标
+                .setNullable(false)
+                .setPartner("TestItem"); //传自己
+
+        entityType.setNavigationProperties(Collections.singletonList(navProp));
+        return entityType;
     }
 }
