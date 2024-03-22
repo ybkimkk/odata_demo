@@ -3,9 +3,7 @@ package com.example.demo.service.common;
 import com.example.demo.contains.Contains;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
-import org.apache.olingo.commons.api.edm.provider.CsdlEntitySet;
-import org.apache.olingo.commons.api.edm.provider.CsdlEntityType;
-import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
+import org.apache.olingo.commons.api.edm.provider.*;
 import org.apache.olingo.server.api.ODataApplicationException;
 
 import java.lang.reflect.Field;
@@ -31,15 +29,6 @@ public abstract class AbCommonService {
         return csdlPropertyArrayList;
     }
 
-    //必须继承
-    public CsdlEntitySet getEntitySet(FullQualifiedName entityContainer, String entitySetName) throws ODataApplicationException {
-        throw new ODataApplicationException(entitySetName + "Service: getEntitySet is not Realize", 500, Locale.ROOT);
-    }
-
-    //必须继承
-    public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) throws ODataApplicationException {
-        throw new ODataApplicationException(entityTypeName.getName() + "Service: getEntityType is not Realize", 500, Locale.ROOT);
-    }
 
     //未知变量在这里添加
     private FullQualifiedName getFullQualifiedName(String fieldType) {
@@ -68,6 +57,7 @@ public abstract class AbCommonService {
                 return EdmPrimitiveTypeKind.String.getFullQualifiedName();
         }
     }
+
     protected FullQualifiedName getAllFullQualifiedName(String name) {
         return new FullQualifiedName(Contains.NAME_SPACE, name);
     }

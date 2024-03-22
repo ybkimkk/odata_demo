@@ -1,4 +1,4 @@
-package com.example.demo.processor;
+package com.example.demo.processor.common;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
@@ -20,7 +20,7 @@ import java.util.Map;
 
 @Component
 @Slf4j
-public class CommonEntityProcessor {
+public class CommonProcessor {
 
     @Resource
     protected ApplicationContext applicationContext;
@@ -28,7 +28,6 @@ public class CommonEntityProcessor {
 
     @PostConstruct
     public void init() {
-
         Map<String, ICommonService> beansOfType = applicationContext.getBeansOfType(ICommonService.class);
         for (Map.Entry<String, ICommonService> entry : beansOfType.entrySet()) {
             ICommonService ICommonService = entry.getValue();
@@ -71,6 +70,10 @@ public class CommonEntityProcessor {
             stringObjectMap.put(property.getName(), property.getValue());
         }
         return stringObjectMap;
+    }
+
+    public Map<String, ICommonService<?>> getServiceMap() {
+        return SERVICE_MAP;
     }
 
 }

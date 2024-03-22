@@ -1,9 +1,12 @@
 package com.example.demo.servlet;
 
 import com.example.demo.processor.*;
+import com.example.demo.processor.common.InitEdmProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ODataHttpHandler;
 import org.apache.olingo.server.api.ServiceMetadata;
+import org.apache.olingo.server.api.processor.EntityProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
@@ -14,19 +17,23 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 
 @WebServlet(name = "ODataServlet", urlPatterns = "/Aspn.svc/*")
+@Slf4j
 public class ODataServlet extends HttpServlet {
 
     @Autowired
-    private ListEntityCollectionProcessor entityCollectionProcessor;
+    private CollectionProcessor entityCollectionProcessor;
 
     @Autowired
-    private DetailEntityProcessor entityProcessor;
+    private EntityProcessor entityProcessor;
 
     @Autowired
-    private DetailPrimitiveProcessor primitiveProcessor;
+    private PrimitiveProcessor primitiveProcessor;
 
     @Autowired
-    private DemoBatchProcessor batchProcessor;
+    private BatchProcessor batchProcessor;
+
+    @Autowired
+    private ActionProcessor actionProcessor;
 
     @Autowired
     private InitEdmProvider initEdmProvider;
@@ -41,7 +48,7 @@ public class ODataServlet extends HttpServlet {
         handler.register(entityCollectionProcessor);
         handler.register(entityProcessor);
         handler.register(primitiveProcessor);
-//        handler.register(sizeEntityCollectionProcessor);
+        handler.register(actionProcessor);
         handler.register(batchProcessor);
     }
 

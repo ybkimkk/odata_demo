@@ -20,6 +20,7 @@ package com.example.demo.processor;
 
 
 import com.example.demo.data.Storage;
+import com.example.demo.processor.common.CommonProcessor;
 import lombok.RequiredArgsConstructor;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
@@ -33,7 +34,6 @@ import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.*;
 import org.apache.olingo.server.api.deserializer.DeserializerException;
-import org.apache.olingo.server.api.processor.PrimitiveProcessor;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.PrimitiveSerializerOptions;
 import org.apache.olingo.server.api.serializer.SerializerException;
@@ -48,7 +48,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class DetailPrimitiveProcessor extends CommonEntityProcessor implements PrimitiveProcessor {
+public class PrimitiveProcessor extends CommonProcessor implements org.apache.olingo.server.api.processor.PrimitiveProcessor {
 
     private OData odata;
     private final Storage storage;
@@ -98,7 +98,7 @@ public class DetailPrimitiveProcessor extends CommonEntityProcessor implements P
         EntityCollection entityCollection = getEntityCollection(testEntities);
         Entity createdEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
         //--------------------------------------------------------------------------------------------------------------
-        Entity entity = storage.readEntityData(edmEntitySet, keyPredicates);
+//        Entity entity = storage.readEntityData(edmEntitySet, keyPredicates);
         if (createdEntity == null) { // Bad request
             throw new ODataApplicationException("Entity not found",
                     HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);

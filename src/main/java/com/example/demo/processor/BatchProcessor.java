@@ -30,7 +30,6 @@ import org.apache.olingo.server.api.batch.BatchFacade;
 import org.apache.olingo.server.api.deserializer.batch.BatchOptions;
 import org.apache.olingo.server.api.deserializer.batch.BatchRequestPart;
 import org.apache.olingo.server.api.deserializer.batch.ODataResponsePart;
-import org.apache.olingo.server.api.processor.BatchProcessor;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -85,7 +84,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DemoBatchProcessor implements BatchProcessor {
+public class BatchProcessor implements org.apache.olingo.server.api.processor.BatchProcessor {
 
     private OData odata;
 

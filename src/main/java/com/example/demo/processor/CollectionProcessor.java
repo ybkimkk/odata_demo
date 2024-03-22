@@ -20,6 +20,7 @@ package com.example.demo.processor;
 
 
 import com.example.demo.option.common.CommonOption;
+import com.example.demo.processor.common.CommonProcessor;
 import com.example.demo.util.Util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,6 @@ import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.*;
-import org.apache.olingo.server.api.processor.EntityCollectionProcessor;
 import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerException;
@@ -46,7 +46,7 @@ import java.util.*;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class ListEntityCollectionProcessor extends CommonEntityProcessor implements EntityCollectionProcessor {
+public class CollectionProcessor extends CommonProcessor implements org.apache.olingo.server.api.processor.EntityCollectionProcessor {
 
     private OData odata;
 

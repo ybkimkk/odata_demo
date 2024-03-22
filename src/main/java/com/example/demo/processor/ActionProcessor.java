@@ -1,5 +1,8 @@
 package com.example.demo.processor;
 
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.server.api.*;
 import org.apache.olingo.server.api.processor.ActionEntityCollectionProcessor;
@@ -9,24 +12,31 @@ import org.apache.olingo.server.api.uri.UriInfo;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
+
 public class ActionProcessor implements ActionVoidProcessor, ActionEntityCollectionProcessor, ActionEntityProcessor {
+
+    private  OData odata;
+
+    private  ServiceMetadata serviceMetadata;
+    @Override
+    public void init(final OData odata, final ServiceMetadata serviceMetadata) {
+        this.odata = odata;
+        this.serviceMetadata = serviceMetadata;
+    }
+
     @Override
     public void processActionEntityCollection(ODataRequest oDataRequest, ODataResponse oDataResponse, UriInfo uriInfo, ContentType contentType, ContentType contentType1) throws ODataApplicationException, ODataLibraryException {
-
+        log.info("processActionEntityCollection");
     }
 
     @Override
     public void processActionEntity(ODataRequest oDataRequest, ODataResponse oDataResponse, UriInfo uriInfo, ContentType contentType, ContentType contentType1) throws ODataApplicationException, ODataLibraryException {
-
+        log.info("processActionEntity");
     }
 
     @Override
     public void processActionVoid(ODataRequest oDataRequest, ODataResponse oDataResponse, UriInfo uriInfo, ContentType contentType) throws ODataApplicationException, ODataLibraryException {
-
-    }
-
-    @Override
-    public void init(OData oData, ServiceMetadata serviceMetadata) {
-
+        log.info("processActionVoid");
     }
 }

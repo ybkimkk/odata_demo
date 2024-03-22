@@ -19,6 +19,8 @@
 package com.example.demo.processor;
 
 
+import com.example.demo.processor.common.CommonProcessor;
+import com.example.demo.processor.common.InitEdmProvider;
 import com.example.demo.util.Util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +37,6 @@ import org.apache.olingo.server.api.*;
 import org.apache.olingo.server.api.deserializer.DeserializerException;
 import org.apache.olingo.server.api.deserializer.DeserializerResult;
 import org.apache.olingo.server.api.deserializer.ODataDeserializer;
-import org.apache.olingo.server.api.processor.EntityProcessor;
 import org.apache.olingo.server.api.serializer.EntitySerializerOptions;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerException;
@@ -50,7 +51,7 @@ import java.util.*;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DetailEntityProcessor extends CommonEntityProcessor implements EntityProcessor {
+public class Processor extends CommonProcessor implements org.apache.olingo.server.api.processor.EntityProcessor {
 
     private OData odata;
     private ServiceMetadata serviceMetadata;

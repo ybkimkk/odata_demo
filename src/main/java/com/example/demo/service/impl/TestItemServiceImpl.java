@@ -31,7 +31,7 @@ public class TestItemServiceImpl extends AbCommonService implements ITestItemSer
 
     @Override
     public List<TestItemEntity> selectByCondition(Map<String, Object> arg) throws NullPointerException {
-       TestItemEntity convert = Convert.convert(TestItemEntity.class, arg);
+        TestItemEntity convert = Convert.convert(TestItemEntity.class, arg);
         return testItemMapper.selectByCondition(convert);
     }
 
@@ -85,5 +85,25 @@ public class TestItemServiceImpl extends AbCommonService implements ITestItemSer
 
         entityType.setNavigationProperties(Collections.singletonList(navProp));
         return entityType;
+    }
+
+    @Override
+    public List<CsdlAction> getActions(final FullQualifiedName actionName) {
+        return null;
+    }
+
+    @Override
+    public CsdlActionImport getActionImport(FullQualifiedName entityContainer, String actionImportName) {
+        return null;
+    }
+
+    @Override
+    public List<CsdlFunction> getFunctions(FullQualifiedName functionName) {
+        return null;
+    }
+
+    @Override
+    public CsdlFunctionImport getFunctionImport(FullQualifiedName entityContainer, String functionImportName) {
+        return null;
     }
 }
