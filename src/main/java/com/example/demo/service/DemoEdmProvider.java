@@ -21,12 +21,14 @@ package com.example.demo.service;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@Component
 public class DemoEdmProvider extends CsdlAbstractEdmProvider {
 
   // Service Namespace
@@ -69,10 +71,10 @@ public class DemoEdmProvider extends CsdlAbstractEdmProvider {
   public List<CsdlAction> getActions(final FullQualifiedName actionName) {
      if(actionName.equals(ACTION_RESET_FQN)) {
        // It is allowed to overload actions, so we have to provide a list of Actions for each action name
-       final List<CsdlAction> actions = new ArrayList<CsdlAction>();
+       final List<CsdlAction> actions = new ArrayList<>();
        
        // Create parameters
-       final List<CsdlParameter> parameters = new ArrayList<CsdlParameter>();
+       final List<CsdlParameter> parameters = new ArrayList<>();
        final CsdlParameter parameter = new CsdlParameter();
        parameter.setName(PARAMETER_AMOUNT);
        parameter.setType(EdmPrimitiveTypeKind.Int32.getFullQualifiedName());

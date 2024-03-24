@@ -1,11 +1,14 @@
 package com.example.demo.servlet;
 
+import com.example.demo.data.Storage;
 import com.example.demo.processor.ActionProcessor;
 import com.example.demo.processor.BatchProcessor;
 import com.example.demo.processor.CollectionProcessor;
 import com.example.demo.processor.PrimitiveProcessor;
 import com.example.demo.processor.common.EdmProvider;
+import com.example.demo.service.DemoEdmProvider;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.olingo.commons.api.edmx.EdmxReference;
 import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ODataHttpHandler;
 import org.apache.olingo.server.api.ServiceMetadata;
@@ -16,6 +19,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 
 @WebServlet(name = "ODataServlet", urlPatterns = "/Aspn.svc/*")
@@ -36,21 +40,31 @@ public class ODataServlet extends HttpServlet {
 
     @Resource
     private ActionProcessor actionProcessor;
-
     @Resource
     private EdmProvider edmProvider;
 
+    @Resource DemoEdmProvider demoEdmProvider;
+
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) {
+
         OData odata = OData.newInstance();
-        ServiceMetadata edm = odata.createServiceMetadata(edmProvider, new ArrayList<>());
-        ODataHttpHandler  handler = odata.createHandler(edm);
-        handler.register(collectionProcessor);
-        handler.register(entityProcessor);
-        handler.register(primitiveProcessor);
-        handler.register(actionProcessor);
-        handler.register(batchProcessor);
-        handler.process(req, resp);
+        ServiceMetadata edm = odata.createServiceMetadata(demoEdmProvider, new ArrayList<>());
+
+        try {
+            ODataHttpHandler handler = odata.createHandler(edm);
+            handler.register(collectionProcessor);
+            handler.register(entityProcessor);
+            handler.register(primitiveProcessor);
+            handler.register(actionProcessor);
+            handler.register(batchProcessor);
+            handler.process(req, resp);
+
+            // let the handler do the work
+            handler.process(req, resp);
+        } catch (RuntimeException e) {
+            log.error("Server Error occurred in ExampleServlet", e);
+        }
     }
 
 }
