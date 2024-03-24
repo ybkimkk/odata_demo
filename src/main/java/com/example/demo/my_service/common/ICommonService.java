@@ -1,4 +1,4 @@
-package com.example.demo.service.common;
+package com.example.demo.my_service.common;
 
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
@@ -23,7 +23,6 @@ public interface ICommonService<T> {
 
 
     List<CsdlAction> getActions(final FullQualifiedName actionName);
-
 
     CsdlActionImport getActionImport(final FullQualifiedName entityContainer, final String actionImportName);
 

@@ -1,17 +1,15 @@
-package com.example.demo.service.common;
+package com.example.demo.my_service.common;
 
 import com.example.demo.contains.Contains;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
-import org.apache.olingo.server.api.ODataApplicationException;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
-public abstract class AbCommonService {
+public class AbCommonService {
     protected List<CsdlProperty> getSimpleOdataEntity(String entityName) throws ClassNotFoundException {
 
         entityName = Contains.PACKAGE + ".entity." + entityName + "Entity";

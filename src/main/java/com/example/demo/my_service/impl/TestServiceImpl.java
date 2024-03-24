@@ -1,4 +1,4 @@
-package com.example.demo.service.impl;
+package com.example.demo.my_service.impl;
 
 import cn.hutool.core.convert.Convert;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -6,8 +6,8 @@ import com.example.demo.anotation.OdataAction;
 import com.example.demo.anotation.OdataFunction;
 import com.example.demo.entity.TestEntity;
 import com.example.demo.mapper.TestMapper;
-import com.example.demo.service.ITestService;
-import com.example.demo.service.common.AbCommonService;
+import com.example.demo.my_service.ITestService;
+import com.example.demo.my_service.common.AbCommonService;
 import lombok.RequiredArgsConstructor;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
@@ -26,57 +26,6 @@ import java.util.*;
 public class TestServiceImpl extends AbCommonService implements ITestService {
 
     private final TestMapper testMapper;
-
-    // Service Namespace
-    public static final String NAMESPACE = "OData.Demo";
-
-    // EDM Container
-    public static final String CONTAINER_NAME = "Container";
-    public static final FullQualifiedName CONTAINER = new FullQualifiedName(NAMESPACE, CONTAINER_NAME);
-
-    // Entity Types Names
-    public static final String ET_PRODUCT_NAME = "Product";
-    public static final FullQualifiedName ET_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, ET_PRODUCT_NAME);
-
-    public static final String ET_CATEGORY_NAME = "Category";
-    public static final FullQualifiedName ET_CATEGORY_FQN = new FullQualifiedName(NAMESPACE, ET_CATEGORY_NAME);
-
-    // Entity Set Names
-    public static final String ES_PRODUCTS_NAME = "Products";
-    public static final String ES_CATEGORIES_NAME = "Categories";
-
-    // Action
-    public static final String ACTION_RESET = "Reset";
-    public static final FullQualifiedName ACTION_RESET_FQN = new FullQualifiedName(NAMESPACE, ACTION_RESET);
-
-    //Bound Action
-    public static final String ACTION_PROVIDE_DISCOUNT = "DiscountProducts";
-    public static final FullQualifiedName ACTION_PROVIDE_DISCOUNT_FQN = new FullQualifiedName(NAMESPACE, ACTION_PROVIDE_DISCOUNT);
-
-    //Bound Action
-    public static final String ACTION_PROVIDE_DISCOUNT_FOR_PRODUCT = "DiscountProduct";
-    public static final FullQualifiedName ACTION_PROVIDE_DISCOUNT_FOR_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, ACTION_PROVIDE_DISCOUNT_FOR_PRODUCT);
-
-    // Function
-    public static final String FUNCTION_COUNT_CATEGORIES = "CountCategories";
-    public static final FullQualifiedName FUNCTION_COUNT_CATEGORIES_FQN
-            = new FullQualifiedName(NAMESPACE, FUNCTION_COUNT_CATEGORIES);
-    //Bound Function
-    public static final String FUNCTION_PROVIDE_DISCOUNT = "GetDiscountProducts";
-    public static final FullQualifiedName FUNCTION_PROVIDE_DISCOUNT_FQN = new FullQualifiedName(NAMESPACE, FUNCTION_PROVIDE_DISCOUNT);
-
-    public static final String FUNCTION_PROVIDE_DISCOUNT_FOR_PRODUCT = "GetDiscountProduct";
-    public static final FullQualifiedName FUNCTION_PROVIDE_DISCOUNT_FOR_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, FUNCTION_PROVIDE_DISCOUNT_FOR_PRODUCT);
-
-    // Function/Action Parameters
-    public static final String PARAMETER_AMOUNT = "Amount";
-
-    //Bound Action Binding Parameter
-    public static final String PARAMETER_CATEGORY = "ParamCategory";
-
-    //Bound Function Binding Parameter
-    public static final String PARAMETER_BIND = "BindingParameter";
-
 
     @Override
     public List<TestEntity> selectByCondition(Map<String, Object> arg) throws NullPointerException {
@@ -145,18 +94,14 @@ public class TestServiceImpl extends AbCommonService implements ITestService {
     public List<CsdlAction> getActions(final FullQualifiedName actionName) {
         //创建入参
         List<CsdlAction> actions = new ArrayList<>();
-
         actions.add(getTest());
-
         return actions;
-
-//        return null;
     }
 
     @Override
     public CsdlActionImport getActionImport(FullQualifiedName entityContainer, String actionImportName) {
         return new CsdlActionImport()
-                .setName("Reset")
+                .setName(actionImportName)
                 .setAction(entityContainer);
     }
 
@@ -165,8 +110,6 @@ public class TestServiceImpl extends AbCommonService implements ITestService {
         List<CsdlFunction> functions = new ArrayList<>();
         functions.add(getTestFunction());
         return functions;
-
-//        return null;
     }
 
     @Override
@@ -176,8 +119,6 @@ public class TestServiceImpl extends AbCommonService implements ITestService {
                 .setFunction(getAllFullQualifiedName(functionImportName))
                 .setEntitySet(entityContainer.getName())
                 .setIncludeInServiceDocument(true);
-
-//        return null;
     }
 
     @OdataFunction
@@ -204,13 +145,13 @@ public class TestServiceImpl extends AbCommonService implements ITestService {
         // Create parameters
         final List<CsdlParameter> parameters = new ArrayList<>();
         final CsdlParameter parameter = new CsdlParameter();
-        parameter.setName(PARAMETER_AMOUNT);
+        parameter.setName("ID");
         parameter.setType(EdmPrimitiveTypeKind.Int32.getFullQualifiedName());
         parameters.add(parameter);
 
         // Create the Csdl Action
         final CsdlAction action = new CsdlAction();
-        action.setName(ACTION_RESET_FQN.getName());
+        action.setName("getTest");
         action.setParameters(parameters);
 
 

@@ -2,7 +2,7 @@ package com.example.demo.processor.common;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
-import com.example.demo.service.common.ICommonService;
+import com.example.demo.my_service.common.ICommonService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
@@ -39,6 +39,9 @@ public class CommonProcessor {
     protected ICommonService getService(String db) {
         return SERVICE_MAP.get(db);
     }
+    public Map<String, ICommonService<?>> getService() {
+        return SERVICE_MAP;
+    }
 
     protected EntityCollection getEntityCollection(List<?> list) {
         EntityCollection retEntitySet = new EntityCollection();
@@ -72,8 +75,6 @@ public class CommonProcessor {
         return stringObjectMap;
     }
 
-    public Map<String, ICommonService<?>> getServiceMap() {
-        return SERVICE_MAP;
-    }
+
 
 }

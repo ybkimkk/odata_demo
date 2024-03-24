@@ -1,10 +1,10 @@
-package com.example.demo.service.impl;
+package com.example.demo.my_service.impl;
 
 import cn.hutool.core.convert.Convert;
 import com.example.demo.entity.TestItemEntity;
 import com.example.demo.mapper.TestItemMapper;
-import com.example.demo.service.ITestItemService;
-import com.example.demo.service.common.AbCommonService;
+import com.example.demo.my_service.ITestItemService;
+import com.example.demo.my_service.common.AbCommonService;
 import lombok.RequiredArgsConstructor;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;

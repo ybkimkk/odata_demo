@@ -19,8 +19,7 @@
 package com.example.demo.processor;
 
 
-import com.example.demo.data.Storage;
-import lombok.RequiredArgsConstructor;
+import com.example.demo.data1.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
@@ -32,6 +31,7 @@ import org.apache.olingo.server.api.deserializer.batch.BatchRequestPart;
 import org.apache.olingo.server.api.deserializer.batch.ODataResponsePart;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,13 +82,13 @@ import java.util.UUID;
  */
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class BatchProcessor implements org.apache.olingo.server.api.processor.BatchProcessor {
 
     private OData odata;
 
-    private final Storage storage;
+    @Resource
+    private  Storage storage;
 
     @Override
     public void init(final OData odata, final ServiceMetadata serviceMetadata) {

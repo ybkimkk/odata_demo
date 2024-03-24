@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Logback 配置文件 -->
+<configuration>
+
+    <!-- 控制台输出 appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 日志格式编码器 -->
+        <encoder>
+            <!-- 控制台输出格式，日期，线程，日志级别， -->
+            <!--            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %5level %logger - %msg%n</pattern>-->
+            <pattern>%d{HH:mm:ss} %5level - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 文件输出 appender -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 日志格式编码器 -->
+        <encoder>
+            <!-- 文件输出格式，日期，线程，日志级别，日志记录器的名称（和当前类的全限定类名一般相同），输出信息 -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <!-- 字符编码 -->
+            <charset>utf-8</charset>
+        </encoder>
+        <!-- 日志文件路径 -->
+        <file>log/output-logback.log</file>
+        <!-- 日志滚动策略 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <!-- 日志文件名模式 -->
+            <fileNamePattern>log/output.log.%i</fileNamePattern>
+        </rollingPolicy>
+        <!-- 触发策略：基于文件大小 -->
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <!-- 最大日志文件大小 -->
+            <MaxFileSize>100MB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <!-- 根日志级别设置为 DEBUG -->
+    <root level="info">
+        <!-- 引用控制台输出 appender，可选 -->
+        <appender-ref ref="CONSOLE"/>
+        <!-- 引用文件输出 appender，可选 -->
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>
+

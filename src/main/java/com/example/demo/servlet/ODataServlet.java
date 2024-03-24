@@ -1,15 +1,16 @@
 package com.example.demo.servlet;
 
-import com.example.demo.processor.*;
+import com.example.demo.processor.ActionProcessor;
+import com.example.demo.processor.BatchProcessor;
+import com.example.demo.processor.CollectionProcessor;
+import com.example.demo.processor.PrimitiveProcessor;
 import com.example.demo.processor.common.EdmProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ODataHttpHandler;
 import org.apache.olingo.server.api.ServiceMetadata;
 import org.apache.olingo.server.api.processor.EntityProcessor;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -39,38 +40,17 @@ public class ODataServlet extends HttpServlet {
     @Resource
     private EdmProvider edmProvider;
 
-    private static ODataHttpHandler handler;
-
-    @PostConstruct
-    public void init() {
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) {
         OData odata = OData.newInstance();
         ServiceMetadata edm = odata.createServiceMetadata(edmProvider, new ArrayList<>());
-        handler = odata.createHandler(edm);
+        ODataHttpHandler  handler = odata.createHandler(edm);
         handler.register(collectionProcessor);
         handler.register(entityProcessor);
         handler.register(primitiveProcessor);
         handler.register(actionProcessor);
         handler.register(batchProcessor);
-    }
-
-
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         handler.process(req, resp);
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
-        handler.process(req, resp);
-    }
-
-    @Override
-    protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
-        handler.process(req, resp);
-    }
-
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
-        handler.process(req, resp);
-    }
 }
