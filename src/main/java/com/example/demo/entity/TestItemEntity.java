@@ -11,6 +11,7 @@ import lombok.EqualsAndHashCode;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +22,7 @@ import java.util.List;
  * @author jinyongbin
  * @since  2024-03-21 11:57:19
  */
-
+@Component
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("test_item")

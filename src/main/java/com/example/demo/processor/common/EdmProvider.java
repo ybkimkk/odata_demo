@@ -18,9 +18,9 @@
  */
 package com.example.demo.processor.common;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson2.JSON;
 import com.example.demo.contains.Contains;
-import com.example.demo.entity.common.IEntity;
 import com.example.demo.methods.functionns.IFunction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,10 @@ import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /*
  * this class is supposed to declare the metadata of the OData service
@@ -44,42 +47,40 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
 
     private final CommonProcessor commonProcessor;
 
-    private static List<CsdlSchema> schemaList;
+    private static List<CsdlSchema> SCHEMA_LIST;
+    private static CsdlEntityContainer ENTITY_CONTAINER;
+    private static CsdlEntityContainerInfo ENTITY_CONTAINER_INFO;
 
     @Override
     public List<CsdlSchema> getSchemas() {
         try {
-            if (Objects.nonNull(schemaList)) {
-                return schemaList;
+            if (Objects.nonNull(SCHEMA_LIST)) {
+                return SCHEMA_LIST;
             }
 
             synchronized (this) {
-                if (Objects.isNull(schemaList)) {
+                if (Objects.isNull(SCHEMA_LIST)) {
                     // create Schema
                     CsdlSchema schema = new CsdlSchema();
                     schema.setNamespace(Contains.NAME_SPACE);
                     CsdlEntityContainer entityContainer = new CsdlEntityContainer();
                     entityContainer.setName(Contains.NAME_SPACE);
 
-                    List<CsdlEntityType> entityTypes = new ArrayList<>();
+                    // create EntitySets
                     List<CsdlFunction> functions = new ArrayList<>();
 
-                    Map<String, IEntity> entityMap = commonProcessor.getEntity();
-                    for (Map.Entry<String, IEntity> entityEntry : entityMap.entrySet()) {
-                        entityTypes.add(commonProcessor.getEntity(entityEntry.getKey()).getEntityType());
-                    }
-                    schema.setEntityTypes(entityTypes);
+                    schema.setEntityTypes(commonProcessor.getEntityType(null));
 
-                    List<CsdlAction> action = commonProcessor.getAction();
+                    List<CsdlAction> action = commonProcessor.getAction(null);
                     schema.setActions(action);
 
                     // add EntityContainer
                     schema.setEntityContainer(getEntityContainer());
                     log.info("EdmProvider.getSchemas return is : {}", JSON.toJSONString(schema));
-                    schemaList = Collections.singletonList(schema);
-                    return schemaList;
+                    SCHEMA_LIST = Collections.singletonList(schema);
+                    return SCHEMA_LIST;
                 }
-                return schemaList;
+                return SCHEMA_LIST;
             }
         } catch (Exception e) {
             log.error("InitEdmProvider.getSchemas has error msg : {}", JSON.toJSONString(e));
@@ -90,45 +91,49 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
     @Override
     public CsdlEntityContainer getEntityContainer() {
         try {
-
-            List<CsdlEntitySet> entitySets = new ArrayList<>();
-
-            Map<String, IEntity> entity = commonProcessor.getEntity();
-            for (Map.Entry<String, IEntity> entityEntry : entity.entrySet()) {
-                entitySets.add(commonProcessor.getEntity(entityEntry.getKey()).getEntitySet());
+            if (Objects.nonNull(ENTITY_CONTAINER)) {
+                return ENTITY_CONTAINER;
             }
 
-            List<CsdlActionImport> actionImport = commonProcessor.getActionImports();
-
-            CsdlEntityContainer entityContainer = new CsdlEntityContainer();
-            entityContainer.setName(Contains.CONTAINER_NAME);
-            entityContainer.setActionImports(actionImport);
-            entityContainer.setEntitySets(entitySets);
-            log.info("EdmProvider.getEntityContainer return is : {}", JSON.toJSONString(entityContainer));
-            return entityContainer;
+            synchronized (this) {
+                if (Objects.isNull(ENTITY_CONTAINER)) {
+                    List<CsdlEntitySet> entitySets = commonProcessor.getEntitySet(null);
+                    List<CsdlActionImport> actionImport = commonProcessor.getActionImport(null);
+                    CsdlEntityContainer container = new CsdlEntityContainer();
+                    container.setName(Contains.CONTAINER_NAME);
+                    container.setActionImports(actionImport);
+                    container.setEntitySets(entitySets);
+                    ENTITY_CONTAINER = container;
+                    return ENTITY_CONTAINER;
+                }
+                return ENTITY_CONTAINER;
+            }
         } catch (Exception e) {
             log.error("InitEdmProvider.getEntityContainer has error : ", e);
         }
+
         return null;
     }
 
     @Override
     public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) {
         log.info("EdmProvider.getEntityType param entityTypeName is : {}", JSON.toJSONString(entityTypeName));
-        CsdlEntityType entityType = commonProcessor.getEntity(entityTypeName.getName()).getEntityType();
+        CsdlEntityType entityType = null;
+        List<CsdlEntityType> entityTypes = commonProcessor.getEntityType(entityTypeName.getName());
+        if (CollUtil.isNotEmpty(entityTypes)) {
+            entityType = entityTypes.get(0);
+        }
         log.info("EdmProvider.getEntityType return is : {}", JSON.toJSONString(entityType));
         return entityType;
-
-
     }
 
     @Override
     public CsdlEntitySet getEntitySet(FullQualifiedName entityContainer, String entitySetName) {
         log.info("EdmProvider.getEntitySet param entityContainer is : {} , entitySetName is : {}", JSON.toJSONString(entityContainer), entitySetName);
         CsdlEntitySet csdlEntitySet = null;
-        IEntity entity = commonProcessor.getEntity(entitySetName);
-        if (Objects.nonNull(entity)) {
-            csdlEntitySet = entity.getEntitySet();
+        List<CsdlEntitySet> csdlEntitySets = commonProcessor.getEntitySet(entitySetName);
+        if (CollUtil.isNotEmpty(csdlEntitySets)) {
+            csdlEntitySet = csdlEntitySets.get(0);
         }
         log.info("EdmProvider.getEntitySet return is : {}", JSON.toJSONString(csdlEntitySet));
         return csdlEntitySet;
@@ -137,13 +142,20 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
     @Override
     public CsdlEntityContainerInfo getEntityContainerInfo(FullQualifiedName entityContainerName) {
         log.info("EdmProvider.getEntityContainerInfo param entityContainerName is : {}", JSON.toJSONString(entityContainerName));
-        CsdlEntityContainerInfo entityContainerInfo = null;
-        if (entityContainerName == null || entityContainerName.equals(CONTAINER)) {
-            entityContainerInfo = new CsdlEntityContainerInfo();
-            entityContainerInfo.setContainerName(CONTAINER);
+        if (Objects.nonNull(ENTITY_CONTAINER_INFO)) {
+            return ENTITY_CONTAINER_INFO;
+
         }
-        log.info("EdmProvider.getEntityContainerInfo return is : {}", JSON.toJSONString(entityContainerInfo));
-        return entityContainerInfo;
+
+        synchronized (this) {
+            if (Objects.isNull(ENTITY_CONTAINER_INFO)){
+                CsdlEntityContainerInfo entityContainerInfo = new CsdlEntityContainerInfo();
+                entityContainerInfo.setContainerName(CONTAINER);
+                ENTITY_CONTAINER_INFO = entityContainerInfo;
+                return ENTITY_CONTAINER_INFO;
+            }
+            return ENTITY_CONTAINER_INFO;
+        }
     }
 
     @Override
@@ -164,17 +176,6 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
     @Override
     public List<CsdlFunction> getFunctions(final FullQualifiedName functionName) {
         log.info("EdmProvider.getFunctions param is : {}", JSON.toJSONString(functionName));
@@ -187,6 +188,7 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
 
         return csdlFunctionList;
     }
+
     //TODO 会进入 Container
     @Override
     public CsdlFunctionImport getFunctionImport(final FullQualifiedName entityContainer, String functionImportName) {
