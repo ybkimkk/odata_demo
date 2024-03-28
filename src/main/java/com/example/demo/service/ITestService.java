@@ -1,7 +1,7 @@
-package com.example.demo.my_service;
+package com.example.demo.service;
 
 import com.example.demo.entity.TestEntity;
-import com.example.demo.my_service.common.ICommonService;
+import com.example.demo.service.common.ICommonService;
 
 /**
  * @author jinyongbin

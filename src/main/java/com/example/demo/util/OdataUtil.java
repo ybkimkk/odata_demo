@@ -1,16 +1,20 @@
-package com.example.demo.my_service.common;
+package com.example.demo.util;
 
 import com.example.demo.contains.Contains;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
-import org.apache.olingo.commons.api.edm.provider.*;
+import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AbCommonService {
-    protected List<CsdlProperty> getSimpleOdataEntity(String entityName) throws ClassNotFoundException {
+public class OdataUtil {
+
+    public static FullQualifiedName getAllFullQualifiedName(String name) {
+        return new FullQualifiedName(Contains.NAME_SPACE, name);
+    }
+    public static List<CsdlProperty> getSimpleOdataEntity(String entityName) throws ClassNotFoundException {
 
         entityName = Contains.PACKAGE + ".entity." + entityName + "Entity";
         Class<?> clazz = Class.forName(entityName);
@@ -27,9 +31,8 @@ public class AbCommonService {
         return csdlPropertyArrayList;
     }
 
-
     //未知变量在这里添加
-    private FullQualifiedName getFullQualifiedName(String fieldType) {
+    public static FullQualifiedName getFullQualifiedName(String fieldType) {
         switch (fieldType) {
             case "java.math.BigDecimal":
                 return EdmPrimitiveTypeKind.Decimal.getFullQualifiedName();
@@ -55,9 +58,4 @@ public class AbCommonService {
                 return EdmPrimitiveTypeKind.String.getFullQualifiedName();
         }
     }
-
-    protected FullQualifiedName getAllFullQualifiedName(String name) {
-        return new FullQualifiedName(Contains.NAME_SPACE, name);
-    }
-
 }

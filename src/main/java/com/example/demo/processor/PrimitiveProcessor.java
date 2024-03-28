@@ -90,7 +90,7 @@ public class PrimitiveProcessor extends CommonProcessor implements org.apache.ol
         for (UriParameter keyPredicate : keyPredicates) {
             sql.put(keyPredicate.getName(), keyPredicate.getText());
         }
-        List<Object> testEntities = getService(edmEntitySet.getName()).selectByCondition(sql);
+        List<?> testEntities = getService(edmEntitySet.getName()).selectByCondition(sql);
         EntityCollection entityCollection = getEntityCollection(testEntities);
         Entity createdEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
         //--------------------------------------------------------------------------------------------------------------
