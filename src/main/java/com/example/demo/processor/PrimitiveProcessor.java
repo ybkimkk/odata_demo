@@ -20,6 +20,7 @@ package com.example.demo.processor;
 
 
 import com.example.demo.processor.common.CommonProcessor;
+import com.example.demo.util.OdataUtil;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
@@ -39,16 +40,20 @@ import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.*;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 @Component
-public class PrimitiveProcessor extends CommonProcessor implements org.apache.olingo.server.api.processor.PrimitiveProcessor {
+public class PrimitiveProcessor implements org.apache.olingo.server.api.processor.PrimitiveProcessor {
 
     private OData odata;
     private ServiceMetadata serviceMetadata;
+
+    @Resource
+    private CommonProcessor commonProcessor;
 
 
     public void init(OData odata, ServiceMetadata serviceMetadata) {
@@ -90,8 +95,8 @@ public class PrimitiveProcessor extends CommonProcessor implements org.apache.ol
         for (UriParameter keyPredicate : keyPredicates) {
             sql.put(keyPredicate.getName(), keyPredicate.getText());
         }
-        List<?> testEntities = getService(edmEntitySet.getName()).selectByCondition(sql);
-        EntityCollection entityCollection = getEntityCollection(testEntities);
+        List<?> testEntities = commonProcessor.getService(edmEntitySet.getName()).selectByCondition(sql);
+        EntityCollection entityCollection = OdataUtil.getEntityCollection(testEntities);
         Entity createdEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
         //--------------------------------------------------------------------------------------------------------------
 //        Entity entity = storage.readEntityData(edmEntitySet, keyPredicates);

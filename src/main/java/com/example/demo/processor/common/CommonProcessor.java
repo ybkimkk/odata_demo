@@ -89,6 +89,8 @@ public class CommonProcessor {
         return SERVICE_MAP;
     }
 
+
+    //TODO
     public void doAction(String actionName, Map<String, String> params) {
         Object odataMethods = getOdataMethods(actionName, ICommonService.class, OdataDoAction.class, params);
     }
@@ -131,6 +133,14 @@ public class CommonProcessor {
     }
 
 
+    /**
+     * 反射方法 包括但不限于 OdataActionImport  OdataAction   OdataDoAction
+     * @param actionName 动作名字
+     * @param clazz
+     * @param annotationClass  注解方法
+     * @param params 执行参数
+     * @return
+     */
     private List<Object> getOdataMethods(String actionName, Class<?> clazz, Class<? extends Annotation> annotationClass, Map<String, String> params) {
         Map<String, ?> iActionClass = applicationContext.getBeansOfType(clazz);
         List<Object> objects = new ArrayList<>();
@@ -150,7 +160,6 @@ public class CommonProcessor {
                             }
                         }
 
-
                         //需要从springboot 实例对象获取
                         if (annotation instanceof OdataDoAction) {
                             objects.add(method.invoke(value, params));
@@ -166,6 +175,7 @@ public class CommonProcessor {
         return objects;
     }
 
+    //此处可以进一步优化
     private Method[] getOrCacheMethods(Class<?> clazz) {
         synchronized (CACHED_METHODS) {
             if (!CACHED_METHODS.containsKey(clazz)) {
@@ -179,38 +189,5 @@ public class CommonProcessor {
     public IFunction getFunction(String db) {
         return FUNCTION_MAP.get(db);
     }
-
-    protected EntityCollection getEntityCollection(List<?> list) {
-        EntityCollection retEntitySet = new EntityCollection();
-        try {
-            for (Object object : list) {
-                Class<?> aClass = object.getClass();
-                Field[] declaredFields = aClass.getDeclaredFields();
-                retEntitySet.getEntities().add(editEntityValue(object, declaredFields));
-            }
-        } catch (IllegalAccessException e) {
-            log.error("CommonEntityProcessor.getEntityCollection has error:{},param :{}", e, JSON.toJSONString(list));
-        }
-
-        return retEntitySet;
-    }
-
-    private Entity editEntityValue(Object object, Field[] declaredFields) throws IllegalAccessException {
-        Entity entity = new Entity();
-        for (Field field : declaredFields) {
-            field.setAccessible(true);
-            entity.addProperty(new Property(null, field.getName(), ValueType.PRIMITIVE, field.get(object)));
-        }
-        return entity;
-    }
-
-    protected Map<String, Object> convertEntityToMap(Entity entity) {
-        Map<String, Object> stringObjectMap = new HashMap<>();
-        for (Property property : entity.getProperties()) {
-            stringObjectMap.put(property.getName(), property.getValue());
-        }
-        return stringObjectMap;
-    }
-
 
 }

@@ -20,7 +20,7 @@ package com.example.demo.processor;
 
 
 import com.example.demo.processor.common.CommonProcessor;
-import com.example.demo.processor.common.EdmProvider;
+import com.example.demo.util.OdataUtil;
 import com.example.demo.util.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.data.ContextURL;
@@ -43,7 +43,6 @@ import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.*;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.io.InputStream;
 import java.util.*;
 
@@ -81,7 +80,7 @@ public class Processor extends CommonProcessor implements org.apache.olingo.serv
 
         Map<String, Object> query = new HashMap<>();
         query.put(keyPredicates.get(0).getName(), Integer.valueOf(keyPredicates.get(0).getText()));
-        EntityCollection entityCollection = getEntityCollection(getService(edmEntitySet.getName()).selectByCondition(query));
+        EntityCollection entityCollection = OdataUtil.getEntityCollection(getService(edmEntitySet.getName()).selectByCondition(query));
         //--------------------------------------------------------------------------------------------------------------
 
 
@@ -130,8 +129,8 @@ public class Processor extends CommonProcessor implements org.apache.olingo.serv
 
 
         //--------------------------------------------------------------------------------------------------------------
-        Object insert = getService(edmEntitySet.getName()).insert(convertEntityToMap(result.getEntity()));
-        EntityCollection entityCollection = getEntityCollection(Collections.singletonList(insert));
+        Object insert = getService(edmEntitySet.getName()).insert(OdataUtil.convertEntityToMap(result.getEntity()));
+        EntityCollection entityCollection = OdataUtil.getEntityCollection(Collections.singletonList(insert));
         Entity createdEntity = entityCollection.getEntities().stream().findFirst().orElse(null);
         //--------------------------------------------------------------------------------------------------------------
 
@@ -172,10 +171,10 @@ public class Processor extends CommonProcessor implements org.apache.olingo.serv
         //--------------------------------------------------------------------------------------------------------------
         List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
         UriParameter uriParameter = keyPredicates.stream().findFirst().orElse(null);
-        Map<String, Object> mapByEntity = convertEntityToMap(result.getEntity());
+        Map<String, Object> mapByEntity = OdataUtil.convertEntityToMap(result.getEntity());
         mapByEntity.put("ID", uriParameter.getText());
         Object insert = getService(edmEntitySet.getName()).update(mapByEntity);
-        EntityCollection entityCollection = getEntityCollection(Collections.singletonList(insert));
+        EntityCollection entityCollection = OdataUtil.getEntityCollection(Collections.singletonList(insert));
         Entity requestEntity = entityCollection.getEntities()
                 .stream()
                 .findFirst()

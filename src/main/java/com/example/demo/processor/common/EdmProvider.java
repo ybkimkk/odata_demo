@@ -68,12 +68,10 @@ public class EdmProvider extends CsdlAbstractEdmProvider {
 
                     // create EntitySets
                     List<CsdlFunction> functions = new ArrayList<>();
-
+                    // add EntitySets
                     schema.setEntityTypes(commonProcessor.getEntityType(null));
-
-                    List<CsdlAction> action = commonProcessor.getAction(null);
-                    schema.setActions(action);
-
+                    // add Actions
+                    schema.setActions(commonProcessor.getAction(null));
                     // add EntityContainer
                     schema.setEntityContainer(getEntityContainer());
                     log.info("EdmProvider.getSchemas return is : {}", JSON.toJSONString(schema));

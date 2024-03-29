@@ -21,6 +21,7 @@ package com.example.demo.processor;
 
 import com.example.demo.option.common.CommonOption;
 import com.example.demo.processor.common.CommonProcessor;
+import com.example.demo.util.OdataUtil;
 import com.example.demo.util.Util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,17 +40,25 @@ import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.*;
 import org.apache.olingo.server.api.uri.queryoption.CountOption;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.*;
 
 @Component
 @Slf4j
-public class CollectionProcessor extends CommonProcessor implements org.apache.olingo.server.api.processor.EntityCollectionProcessor {
+public class CollectionProcessor implements org.apache.olingo.server.api.processor.EntityCollectionProcessor {
 
     private OData odata;
 
     private ServiceMetadata serviceMetadata;
+
+    @Resource
+    private CommonProcessor commonProcessor;
+
+    @Resource
+    private ApplicationContext applicationContext;
 
 
     public void init(OData odata, ServiceMetadata serviceMetadata) {
@@ -105,9 +114,9 @@ public class CollectionProcessor extends CommonProcessor implements org.apache.o
             value.filter(builder, uriInfo, query);
         }
 
-        List<?> sqlResult = getService(tableName).selectByCondition(query);
+        List<?> sqlResult = commonProcessor.getService(tableName).selectByCondition(query);
 
-        EntityCollection entityCollection = getEntityCollection(sqlResult);
+        EntityCollection entityCollection = OdataUtil.getEntityCollection(sqlResult);
         CountOption countOption = uriInfo.getCountOption();
         if (countOption != null && countOption.getValue()) {
             entityCollection.setCount(sqlResult.size());
