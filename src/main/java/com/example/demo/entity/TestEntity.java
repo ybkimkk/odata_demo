@@ -32,6 +32,7 @@ public class TestEntity extends CommonEntity implements IEntity {
     private String NAME;
     private Long AGE;
     private String PRICE;
+    private List<TestItemEntity> testItemEntityList;
 
     @Override
     public CsdlEntityType getEntityType() {

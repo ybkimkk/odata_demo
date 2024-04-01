@@ -19,14 +19,15 @@
 package com.example.demo.processor;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.example.demo.option.common.CommonOption;
 import com.example.demo.processor.common.CommonProcessor;
 import com.example.demo.util.OdataUtil;
 import com.example.demo.util.Util;
-import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.olingo.commons.api.data.ContextURL;
-import org.apache.olingo.commons.api.data.EntityCollection;
+import org.apache.olingo.commons.api.Constants;
+import org.apache.olingo.commons.api.data.*;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
@@ -40,6 +41,7 @@ import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.*;
 import org.apache.olingo.server.api.uri.queryoption.CountOption;
+import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -66,35 +68,36 @@ public class CollectionProcessor implements org.apache.olingo.server.api.process
         this.serviceMetadata = serviceMetadata;
     }
 
+    @SneakyThrows
     public void readEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) throws ODataApplicationException, SerializerException {
 
         //----------------------------------------自定义----------------------------------------------
-        EdmEntitySet responseEdmEntitySet = null; // we'll need this to build the ContextURL
         List<UriResource> resourceParts = uriInfo.getUriResourceParts();
-        int segmentCount = resourceParts.size();
-        UriResource uriResource = resourceParts.get(0);
-        if (!(uriResource instanceof UriResourceEntitySet)) {
-            throw new ODataApplicationException("Only EntitySet is supported",
-                    HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+        UriResource uriResource = resourceParts.stream().reduce((x, y) -> y).orElse(null);
+        if (Objects.isNull(uriResource)) {
+            throw new ODataApplicationException("Bad request", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+
         }
-        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriResource;
-        EdmEntitySet startEdmEntitySet = uriResourceEntitySet.getEntitySet();
         Map<String, Object> query = new HashMap<>();
-        String tableName = "";
-        if (segmentCount == 1) {
-            responseEdmEntitySet = startEdmEntitySet;
-            tableName = responseEdmEntitySet.getName();
-        } else if (segmentCount == 2) {
-            UriResource lastSegment = resourceParts.get(1);
-            if (lastSegment instanceof UriResourceNavigation) {
-                UriResourceNavigation uriResourceNavigation = (UriResourceNavigation) lastSegment;
-                EdmNavigationProperty edmNavigationProperty = uriResourceNavigation.getProperty();
-                responseEdmEntitySet = Util.getNavigationTargetEntitySet(startEdmEntitySet, edmNavigationProperty);
-                List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-                tableName = lastSegment.getSegmentValue();
-                List<Map<String, String>> map = new ArrayList<>();
+        String tableName = uriResource.getSegmentValue();
+
+        EdmEntitySet edmEntitySet;
+        //单个路径
+        if (uriResource instanceof UriResourceEntitySet) {
+            UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriResource;
+            edmEntitySet = uriResourceEntitySet.getEntitySet();
+        }
+        // 深度路径时`
+        else if (uriResource instanceof UriResourceNavigation) {
+            UriResourceNavigation uriResourceNavigation = (UriResourceNavigation) uriResource;
+            EdmNavigationProperty edmNavigationProperty = uriResourceNavigation.getProperty();
+            UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourceParts.stream().findFirst().orElse(null);
+            edmEntitySet = Util.getNavigationTargetEntitySet(uriResourceEntitySet.getEntitySet(), edmNavigationProperty);
+            List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
+            List<Map<String, String>> map = new ArrayList<>();
+            for (int i = 1; i < resourceParts.size(); i++) {
                 Map<String, String> join = new HashMap<>();
-                join.put("tableName", startEdmEntitySet.getName().toLowerCase());
+                join.put("tableName", StrUtil.toUnderlineCase(resourceParts.get(i - 1).getSegmentValue()));
                 join.put("field", keyPredicates.get(0).getName());
                 join.put("value", keyPredicates.get(0).getText());
                 map.add(join);
@@ -104,19 +107,43 @@ public class CollectionProcessor implements org.apache.olingo.server.api.process
             throw new ODataApplicationException("Not supported", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
         }
 
-        ContextURL contextUrl = ContextURL.with().entitySet(responseEdmEntitySet).build();
-        final String id = request.getRawBaseUri() + "/" + responseEdmEntitySet.getName();
-        EntityCollectionSerializerOptions.Builder builder = EntityCollectionSerializerOptions.with()
-                .id(id).contextURL(contextUrl);
+
+        ContextURL contextUrl = ContextURL.with()
+                .entitySet(edmEntitySet)
+                .build();
+        final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
+        EntityCollectionSerializerOptions.Builder builder = EntityCollectionSerializerOptions.with().id(id).contextURL(contextUrl);
 
         Map<String, CommonOption> options = applicationContext.getBeansOfType(CommonOption.class);
         for (CommonOption value : options.values()) {
             value.filter(builder, uriInfo, query);
         }
 
+
         List<?> sqlResult = commonProcessor.getService(tableName).selectByCondition(query);
 
         EntityCollection entityCollection = OdataUtil.getEntityCollection(sqlResult);
+        ExpandOption expandOption = uriInfo.getExpandOption();
+        //说明有组装对象
+        if (query.containsKey("expand")) {
+            List<Entity> entities = entityCollection.getEntities();
+            for (Entity entity : entities) {
+                Link link = new Link();
+                link.setTitle(expandOption.getText());
+                link.setType(Constants.ENTITY_NAVIGATION_LINK_TYPE);
+                link.setRel(Constants.NS_ASSOCIATION_LINK_REL + expandOption.getText());
+                List<Property> properties = entity.getProperties();
+                for (Property property : properties) {
+                    if (property.getValue() instanceof List) {
+                        EntityCollection subCollection = OdataUtil.getEntityCollection((List<?>) property.getValue());
+                        link.setInlineEntitySet(subCollection);
+                    }
+                }
+
+                entity.getNavigationLinks().add(link);
+            }
+        }
+
         CountOption countOption = uriInfo.getCountOption();
         if (countOption != null && countOption.getValue()) {
             entityCollection.setCount(sqlResult.size());
@@ -126,9 +153,13 @@ public class CollectionProcessor implements org.apache.olingo.server.api.process
         ODataSerializer serializer = odata.createSerializer(responseFormat);
 
         // and serialize the content: transform from the EntitySet object to InputStream
-        EdmEntityType edmEntityType = responseEdmEntitySet.getEntityType();
+        EdmEntityType edmEntityType = edmEntitySet.getEntityType();
 
-        EntityCollectionSerializerOptions opts = builder.build();
+        EntityCollectionSerializerOptions opts = builder
+                .count(countOption)
+                .expand(expandOption)
+                .build();
+
         SerializerResult serializedContent = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);
 
         // Finally: configure the response object: set the body, headers and status code

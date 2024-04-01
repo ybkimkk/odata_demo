@@ -7,13 +7,21 @@
         <result property="NAME" column="NAME"/>
         <result property="AGE" column="AGE"/>
         <result property="PRICE" column="PRICE"/>
+        <collection property="testItemEntityList" ofType="com.example.demo.entity.TestItemEntity">
+            <id property="ID" column="ITEM_ID"/>
+            <result property="NAME" column="ITEM_NAME"/>
+            <result property="TEST_ID" column="ITEM_TEST_ID"/>
+        </collection>
     </resultMap>
 
     <sql id="base_column">
-        `ID`,
-        `NAME`,
-        `AGE`,
-        `PRICE`
+        test.`ID`,
+        test.`NAME`,
+        test.`AGE`,
+        test.`PRICE`,
+        test_item.`ID` AS ITEM_ID,
+        test_item.`NAME` AS ITEM_NAME,
+        test_item.`TEST_ID` AS ITEM_TEST_ID
     </sql>
 
     <sql id="table_name">`odata`.`test`</sql>
@@ -40,6 +48,7 @@
         <include refid="base_column"/>
         from
         <include refid="table_name"/>
+        LEFT JOIN `test_item` ON `test`.`ID` = `test_item`.`TEST_ID`
         <if test="arg.filter != null and arg.filter != ''">
             <where>
                 ${arg.filter}

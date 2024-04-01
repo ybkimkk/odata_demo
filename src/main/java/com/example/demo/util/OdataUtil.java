@@ -12,6 +12,7 @@ import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
 
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ public class OdataUtil {
     public static FullQualifiedName getAllFullQualifiedName(String name) {
         return new FullQualifiedName(Contains.NAME_SPACE, name);
     }
+
     public static List<CsdlProperty> getSimpleOdataEntity(String entityName) throws ClassNotFoundException {
 
         entityName = Contains.PACKAGE + ".entity." + entityName + "Entity";

@@ -12,4 +12,5 @@ public class CommonEntity {
     private String orderBy;
     private String filter;
     private List<Map<String, Object>> join;
+    private List<String> expand;
 }
