@@ -32,22 +32,13 @@
         <include refid="base_column"/>
         from
         <include refid="table_name"/>
-        <if test="arg.join !=null">
-            <foreach collection="arg.join" item="item">
-                JOIN ${item.tableName} ON `test_item`.TEST_ID = ${item.tableName}.${item.field}
-            </foreach>
-        </if>
+        JOIN test ON `test_item`.TEST_ID = test.ID
         <where>
             <if test="arg.filter != null and arg.filter != ''">
                 ${arg.filter}
             </if>
             <if test="arg.filter == null or arg.filter == ''">
                 <include refid="base_where"/>
-            </if>
-            <if test="arg.join != null">
-                <foreach collection="arg.join" item="item">
-                    and `test_item`.TEST_ID = ${item.value}
-                </foreach>
             </if>
         </where>
         <if test="arg.orderBy != null and arg.orderBy != ''">

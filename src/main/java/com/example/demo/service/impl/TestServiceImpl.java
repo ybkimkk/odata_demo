@@ -1,11 +1,9 @@
 package com.example.demo.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.demo.anotation.OdataDoAction;
 import com.example.demo.entity.TestEntity;
-import com.example.demo.mapper.TestItemMapper;
 import com.example.demo.mapper.TestMapper;
 import com.example.demo.service.ITestService;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +27,13 @@ public class TestServiceImpl implements ITestService {
 
     private final TestMapper testMapper;
 
-    private final TestItemMapper testItemMapper;
-
     @Override
     public List<TestEntity> selectByCondition(Map<String, Object> arg) throws NullPointerException {
         TestEntity testEntity = Convert.convert(TestEntity.class, arg);
         if (Objects.nonNull(testEntity.getOffset()) && Objects.isNull(testEntity.getCount())) {
             testEntity.setCount(testMapper.selectCount(new QueryWrapper<>()));
         }
+
 
         return testMapper.selectByCondition(testEntity);
     }

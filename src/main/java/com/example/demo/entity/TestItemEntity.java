@@ -9,7 +9,6 @@ import com.example.demo.util.OdataUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
-import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.edm.provider.*;
 import org.springframework.stereotype.Component;
 

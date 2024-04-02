@@ -19,6 +19,12 @@
 package com.example.demo.processor;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSON;
+import com.example.demo.entity.common.CommonEntity;
+import com.example.demo.entity.odata.OdataRequestEntity;
+import com.example.demo.option.common.CommonOption;
 import com.example.demo.processor.common.CommonProcessor;
 import com.example.demo.util.OdataUtil;
 import com.example.demo.util.Util;
@@ -45,6 +51,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -64,41 +71,126 @@ public class Processor extends CommonProcessor implements org.apache.olingo.serv
 
         // 1. retrieve the Entity Type
         List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
-        // Note: only in our example we can assume that the first segment is the EntitySet
+        List<OdataRequestEntity> edmHelper = getEdmHelper(uriInfo.getUriResourceParts());
 
-        //--------------------------------------------------------------------------------------------------------------
-        UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0);
-        List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-        EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
-        EdmEntityType entityType = edmEntitySet.getEntityType();
-        if (resourcePaths.get(resourcePaths.size() - 1) instanceof UriResourceNavigation) {
-            UriResourceNavigation uriResourceNavigation = (UriResourceNavigation) resourcePaths.get(resourcePaths.size() - 1);
-            EdmNavigationProperty property = uriResourceNavigation.getProperty();
-            entityType = property.getType();
-            edmEntitySet = Util.getNavigationTargetEntitySet(edmEntitySet, property);
+        EdmEntitySet edmEntitySet = null;
+        EdmEntityType entityType = null;
+        //说明只有一个路径
+        if (edmHelper.size() == 1) {
+            edmEntitySet = edmHelper.get(0).getEdmEntitySet();
+            entityType = edmHelper.get(0).getEntityType();
+        } else if (edmHelper.size() > 1) {
+            OdataRequestEntity odataRequestEntity = edmHelper.stream().reduce((x, y) -> y).orElseThrow(() -> new ODataApplicationException("No Entity Type found.", HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH));
+            edmEntitySet = odataRequestEntity.getEdmEntitySet();
+            entityType = odataRequestEntity.getEntityType();
+//TODO 多路径 有说法
+        } else {
+            throw new ODataApplicationException("No Entity Type found.", HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);
         }
 
+
+//        //如果为深度路径则 查找最后一个路径的set 如果/Test(1)/TestItem  则查找最后一个TestItem
+//        if (resourcePaths.get(resourcePaths.size() - 1) instanceof UriResourceNavigation) {
+//            UriResourceNavigation uriResourceNavigation = (UriResourceNavigation) resourcePaths.get(resourcePaths.size() - 1);
+//            EdmNavigationProperty property = uriResourceNavigation.getProperty();
+//            entityType = property.getType();
+//            edmEntitySet = (EdmEntitySet) ((UriResourceEntitySet) resourcePaths.get(0))
+//                    .getEntitySet()
+//                    .getRelatedBindingTarget(property.getName());
+//        } else {
+//            UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0);
+//            edmEntitySet = uriResourceEntitySet.getEntitySet();
+//            entityType = edmEntitySet.getEntityType();
+//        }
+
+        ContextURL contextUrl = ContextURL.with()
+                .entitySet(edmEntitySet)
+                .build();
+
+        EntitySerializerOptions.Builder builder = EntitySerializerOptions.with()
+                .contextURL(contextUrl);
+
+        Map<String, CommonOption> options = applicationContext.getBeansOfType(CommonOption.class);
+
         Map<String, Object> query = new HashMap<>();
-        query.put(keyPredicates.get(0).getName(), Integer.valueOf(keyPredicates.get(0).getText()));
-        EntityCollection entityCollection = OdataUtil.getEntityCollection(getService(edmEntitySet.getName()).selectByCondition(query));
+        for (CommonOption value : options.values()) {
+            value.filter(uriInfo, query);
+        }
+
+        List<Map<String, String>> mapList = new ArrayList<>();
+        for (OdataRequestEntity odataRequestEntity : edmHelper) {
+            if (Objects.nonNull(odataRequestEntity.getJoin())) {
+                List<CommonEntity.Join> join = odataRequestEntity.getJoin();
+                mapList = join.stream().map(x -> {
+                    Map<String, String> map = new HashMap<>();
+                    map.put("field", x.getField());
+                    map.put("table", StrUtil.toUnderlineCase(x.getTable()));
+                    map.put("value", x.getValue());
+                    return map;
+                }).collect(Collectors.toList());
+
+            }
+        }
+        query.put("join",mapList);
+
+
+        List<?> list = getService(edmEntitySet.getName()).selectByCondition(query);
+        if (CollUtil.isEmpty(list)) {
+            log.info("No requested resource msg:{}", JSON.toJSONString(query));
+            throw new ODataApplicationException("No requested resource", HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ROOT);
+        }
+
+        EntityCollection entityCollection = OdataUtil.getEntityCollection(list);
         //--------------------------------------------------------------------------------------------------------------
 
-
         // 3. serialize
-
-
-        ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).suffix(ContextURL.Suffix.ENTITY).build();
-        // expand and select currently not supported
-        EntitySerializerOptions options = EntitySerializerOptions.with().contextURL(contextUrl).build();
+        EntitySerializerOptions opts = builder
+                .expand(uriInfo.getExpandOption())
+                .build();
 
         ODataSerializer serializer = this.odata.createSerializer(responseFormat);
 
-        SerializerResult result = serializer.entity(serviceMetadata, entityType, entityCollection.getEntities().stream().findFirst().orElse(null), options);
+        SerializerResult result = serializer.entity(serviceMetadata, entityType, entityCollection.getEntities().stream().findFirst().orElse(new Entity()), opts);
 
         //4. configure the response object
         response.setContent(result.getContent());
         response.setStatusCode(HttpStatusCode.OK.getStatusCode());
         response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+    }
+
+
+    private List<OdataRequestEntity> getEdmHelper(List<UriResource> resourcePaths) {
+        List<OdataRequestEntity> odataRequestEntities = new ArrayList<>();
+        List<CommonEntity.Join> joins = new ArrayList<>();
+
+        for (UriResource resourcePath : resourcePaths) {
+            OdataRequestEntity odataRequestEntity = new OdataRequestEntity();
+            if (resourcePath instanceof UriResourceNavigation) {
+                UriResourceNavigation uriResourceNavigation = (UriResourceNavigation) resourcePath;
+                EdmNavigationProperty property = uriResourceNavigation.getProperty();
+                odataRequestEntity.setEntityType(property.getType());
+                UriResourceEntitySet path = (UriResourceEntitySet) resourcePaths.get(0);
+                EdmEntitySet edmEntitySet = path.getEntitySet();
+                EdmEntitySet entitySet = (EdmEntitySet) edmEntitySet.getRelatedBindingTarget(property.getName());
+                odataRequestEntity.setEdmEntitySet(entitySet);
+            } else {
+                UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePath;
+                EdmEntitySet entitySet = uriResourceEntitySet.getEntitySet();
+
+                for (UriParameter keyPredicate : uriResourceEntitySet.getKeyPredicates()) {
+                    CommonEntity.Join join = new CommonEntity.Join();
+                    join.setTable(entitySet.getName());
+                    join.setValue(keyPredicate.getText());
+                    join.setField(keyPredicate.getName());
+                    joins.add(join);
+                }
+                odataRequestEntity.setEntityType(entitySet.getEntityType());
+                odataRequestEntity.setEdmEntitySet(entitySet);
+                odataRequestEntity.setJoin(joins);
+            }
+            odataRequestEntities.add(odataRequestEntity);
+        }
+        return odataRequestEntities;
     }
 
     /*

@@ -35,6 +35,10 @@
         </triggeringPolicy>
     </appender>
 
+<!--    <logger name="org.mybatis" level="DEBUG"/>-->
+<!--    <logger name="com.example.demo.mapper" level="DEBUG"/>-->
+
+
     <!-- 根日志级别设置为 DEBUG -->
     <root level="info">
         <!-- 引用控制台输出 appender，可选 -->

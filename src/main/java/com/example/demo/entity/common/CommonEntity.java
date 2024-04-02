@@ -3,7 +3,6 @@ package com.example.demo.entity.common;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 
 @Data
 public class CommonEntity {
@@ -11,6 +10,13 @@ public class CommonEntity {
     private Long count;
     private String orderBy;
     private String filter;
-    private List<Map<String, Object>> join;
-    private List<String> expand;
+
+    private List<Join> join;
+
+    @Data
+    public static class Join {
+        private String field;
+        private String value;
+        private String table;
+    }
 }

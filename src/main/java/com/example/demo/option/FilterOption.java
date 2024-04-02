@@ -4,7 +4,6 @@ import com.example.demo.enums.OperatorEnum;
 import com.example.demo.option.common.CommonOption;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.server.api.ODataApplicationException;
-import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions;
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.springframework.stereotype.Component;
 
@@ -16,20 +15,18 @@ import java.util.regex.Pattern;
 @Component
 @Slf4j
 public class FilterOption implements CommonOption {
+
     @Override
-    public void filter(EntityCollectionSerializerOptions.Builder builder, UriInfo uriInfo, Map<String, Object> query) throws ODataApplicationException {
-        org.apache.olingo.server.api.uri.queryoption.FilterOption filterOption = uriInfo.getFilterOption();
-        if (Objects.nonNull(filterOption)) {
+    public void filter( UriInfo uriInfo, Map<String, Object> query) throws ODataApplicationException {
+        if (Objects.nonNull(uriInfo.getFilterOption())) {
             OperatorEnum[] OperatorEnums = OperatorEnum.values();
-            String text = filterOption.getText();
+            String text = uriInfo.getFilterOption().getText();
             for (OperatorEnum OperatorEnum : OperatorEnums) {
-                if (filterOption.getText().contains(OperatorEnum.getOperate())) {
+                if (uriInfo.getFilterOption().getText().contains(OperatorEnum.getOperate())) {
                     text = text.replaceAll(OperatorEnum.getOperate(), OperatorEnum.getMySqlOperate());
                 }
             }
-            text = getLikeSql(text);
-            log.info(text);
-            query.put("filter", text);
+            query.put("filter", getLikeSql(text));
         }
     }
 
@@ -40,7 +37,6 @@ public class FilterOption implements CommonOption {
             String searchSql = matcher.group(1) + " LIKE '" + matcher.group(2) + "%'";
             text = text.replace(matcher.group(), searchSql);
         }
-
         return text;
     }
 

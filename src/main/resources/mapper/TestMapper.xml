@@ -29,16 +29,16 @@
     <sql id="base_where">
         <where>
             <if test="arg.ID != null">
-                and `ID` = #{arg.ID}
+                and `test`.`ID` = #{arg.ID}
             </if>
             <if test="arg.NAME != null and arg.NAME != ''">
-                and `NAME` = #{arg.NAME}
+                and `test`.`NAME` = #{arg.NAME}
             </if>
             <if test="arg.AGE != null">
-                and `AGE` = #{arg.AGE}
+                and `test`.`AGE` = #{arg.AGE}
             </if>
             <if test="arg.PRICE != null and arg.PRICE != ''">
-                and `PRICE` = #{arg.PRICE}
+                and `test`.`PRICE` = #{arg.PRICE}
             </if>
         </where>
     </sql>
@@ -46,15 +46,22 @@
     <select id="selectByCondition" resultMap="TestMap">
         SELECT
         <include refid="base_column"/>
-        from
+        FROM
         <include refid="table_name"/>
         LEFT JOIN `test_item` ON `test`.`ID` = `test_item`.`TEST_ID`
-        <if test="arg.filter != null and arg.filter != ''">
-            <where>
-                ${arg.filter}
-            </where>
-        </if>
-        <if test="arg.filter == null and arg.filter == ''">
+        <where>
+            <trim prefixOverrides="and" prefix="">
+                <if test="arg.filter != null and arg.filter != ''">
+                    ${arg.filter}
+                </if>
+                <if test="arg.join !=null">
+                    <foreach collection="arg.join" item="item">
+                        and ${item.table}.${item.field} = #{item.value}
+                    </foreach>
+                </if>
+            </trim>
+        </where>
+        <if test="arg.filter == null or arg.filter == ''">
             <include refid="base_where"/>
         </if>
         <if test="arg.orderBy != null and arg.orderBy != ''">
