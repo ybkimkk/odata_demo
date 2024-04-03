@@ -32,7 +32,7 @@ public class TestEntity extends CommonEntity implements IEntity {
     private String NAME;
     private Long AGE;
     private String PRICE;
-    private List<TestItemEntity> testItemEntityList;
+    private List<TestItemEntity> TEST_ITEM;
 
     @Override
     public CsdlEntityType getEntityType() {
@@ -49,14 +49,14 @@ public class TestEntity extends CommonEntity implements IEntity {
         //一对多
         List<CsdlNavigationProperty> navPropList = new ArrayList<>();
         CsdlNavigationProperty navProp = new CsdlNavigationProperty()
-                .setName("TestItem")
-                .setType(OdataUtil.getAllFullQualifiedName("TestItem"))
+                .setName("TEST_ITEM")
+                .setType(OdataUtil.getAllFullQualifiedName("TEST_ITEM"))
                 .setCollection(true)   //必须传
-                .setPartner("Test");
+                .setPartner("TEST");
         navPropList.add(navProp);
 
         CsdlEntityType entityType = new CsdlEntityType();
-        entityType.setName("Test");
+        entityType.setName("TEST");
         entityType.setKey(Collections.singletonList(propertyRef));
         entityType.setProperties(csdlPropertyArrayList);
         entityType.setNavigationProperties(navPropList);
@@ -66,11 +66,11 @@ public class TestEntity extends CommonEntity implements IEntity {
     @Override
     public CsdlEntitySet getEntitySet() {
         CsdlEntitySet entitySet = new CsdlEntitySet();
-        entitySet.setName("Test");
-        entitySet.setType(OdataUtil.getAllFullQualifiedName("Test"));
+        entitySet.setName("TEST");
+        entitySet.setType(OdataUtil.getAllFullQualifiedName("TEST"));
         CsdlNavigationPropertyBinding navPropBinding = new CsdlNavigationPropertyBinding();
-        navPropBinding.setTarget("TestItem");
-        navPropBinding.setPath("TestItem");
+        navPropBinding.setTarget("TEST_ITEM");
+        navPropBinding.setPath("TEST_ITEM");
         entitySet.setNavigationPropertyBindings(Collections.singletonList(navPropBinding));
         return entitySet;
     }

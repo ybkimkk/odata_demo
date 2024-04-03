@@ -19,7 +19,7 @@ import java.util.Objects;
 @Slf4j
 public class ExpandOption implements CommonOption {
     @Override
-    public void filter( UriInfo uriInfo, Map<String, Object> query) throws ODataApplicationException {
+    public void filter( UriInfo uriInfo, Map<String, Object> query) {
         if (Objects.nonNull(uriInfo.getExpandOption())) {
             List<ExpandItem> expandItems = uriInfo.getExpandOption().getExpandItems();
             List<String> tableString = new ArrayList<>();

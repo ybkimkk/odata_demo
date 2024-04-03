@@ -13,13 +13,11 @@ import java.util.Objects;
 @Component
 public class TopOption implements CommonOption {
     @Override
-    public void filter(UriInfo uriInfo, Map<String, Object> query) throws ODataApplicationException {
+    public void filter(UriInfo uriInfo, Map<String, Object> query) {
         if (Objects.nonNull(uriInfo.getTopOption())) {
             int topNumber = uriInfo.getTopOption().getValue();
             if (topNumber >= 0) {
                 query.put("count", topNumber);
-            } else {
-                throw new ODataApplicationException("Invalid value for $top", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
             }
         }
     }

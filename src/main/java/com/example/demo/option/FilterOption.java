@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class FilterOption implements CommonOption {
 
     @Override
-    public void filter( UriInfo uriInfo, Map<String, Object> query) throws ODataApplicationException {
+    public void filter( UriInfo uriInfo, Map<String, Object> query)  {
         if (Objects.nonNull(uriInfo.getFilterOption())) {
             OperatorEnum[] OperatorEnums = OperatorEnum.values();
             String text = uriInfo.getFilterOption().getText();

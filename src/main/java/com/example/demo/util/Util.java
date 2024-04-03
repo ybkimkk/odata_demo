@@ -18,16 +18,16 @@
  */
 package com.example.demo.util;
 
+import com.example.demo.entity.common.CommonEntity;
+import com.example.demo.entity.odata.OdataRequestEntity;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
 import org.apache.olingo.commons.api.edm.*;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataApplicationException;
-import org.apache.olingo.server.api.uri.UriInfoResource;
-import org.apache.olingo.server.api.uri.UriParameter;
-import org.apache.olingo.server.api.uri.UriResource;
-import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -157,5 +157,7 @@ public class Util {
 
     return navigationTargetEntitySet;
   }
+
+
 
 }

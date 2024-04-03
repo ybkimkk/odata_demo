@@ -7,7 +7,7 @@
         <result property="NAME" column="NAME"/>
         <result property="AGE" column="AGE"/>
         <result property="PRICE" column="PRICE"/>
-        <collection property="testItemEntityList" ofType="com.example.demo.entity.TestItemEntity">
+        <collection property="TEST_ITEM" ofType="com.example.demo.entity.TestItemEntity">
             <id property="ID" column="ITEM_ID"/>
             <result property="NAME" column="ITEM_NAME"/>
             <result property="TEST_ID" column="ITEM_TEST_ID"/>
@@ -54,6 +54,9 @@
                 <if test="arg.filter != null and arg.filter != ''">
                     ${arg.filter}
                 </if>
+                <if test="arg.filter == null or arg.filter == ''">
+                    <include refid="base_where"/>
+                </if>
                 <if test="arg.join !=null">
                     <foreach collection="arg.join" item="item">
                         and ${item.table}.${item.field} = #{item.value}
@@ -61,9 +64,7 @@
                 </if>
             </trim>
         </where>
-        <if test="arg.filter == null or arg.filter == ''">
-            <include refid="base_where"/>
-        </if>
+
         <if test="arg.orderBy != null and arg.orderBy != ''">
             ORDER BY ${arg.orderBy}
         </if>

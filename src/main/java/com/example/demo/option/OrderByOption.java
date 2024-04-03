@@ -11,7 +11,7 @@ import java.util.Objects;
 @Component
 public class OrderByOption implements CommonOption {
     @Override
-    public void filter( UriInfo uriInfo, Map<String, Object> query) throws ODataApplicationException {
+    public void filter( UriInfo uriInfo, Map<String, Object> query)  {
         if (Objects.nonNull(uriInfo.getOrderByOption())) {
             query.put("orderBy", uriInfo.getOrderByOption().getText());
         }

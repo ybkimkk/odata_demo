@@ -20,19 +20,21 @@ package com.example.demo.processor;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
+import com.example.demo.entity.odata.OdataRequestEntity;
 import com.example.demo.option.common.CommonOption;
 import com.example.demo.processor.common.CommonProcessor;
 import com.example.demo.util.OdataUtil;
-import com.example.demo.util.Util;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.Constants;
-import org.apache.olingo.commons.api.data.*;
+import org.apache.olingo.commons.api.data.ContextURL;
+import org.apache.olingo.commons.api.data.Entity;
+import org.apache.olingo.commons.api.data.EntityCollection;
+import org.apache.olingo.commons.api.data.Link;
+import org.apache.olingo.commons.api.edm.EdmElement;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
-import org.apache.olingo.commons.api.edm.EdmNavigationProperty;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
@@ -41,7 +43,7 @@ import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.serializer.SerializerResult;
-import org.apache.olingo.server.api.uri.*;
+import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.queryoption.CountOption;
 import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
 import org.springframework.context.ApplicationContext;
@@ -74,43 +76,13 @@ public class CollectionProcessor implements org.apache.olingo.server.api.process
     public void readEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat) throws ODataApplicationException, SerializerException {
 
         //----------------------------------------自定义----------------------------------------------
-        List<UriResource> resourceParts = uriInfo.getUriResourceParts();
-        UriResource uriResource = resourceParts.stream().reduce((x, y) -> y).orElse(null);
-        if (Objects.isNull(uriResource)) {
-            throw new ODataApplicationException("Bad request", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
+        List<OdataRequestEntity> edmHelper = OdataUtil.getEdmHelper(uriInfo.getUriResourceParts());
+        OdataRequestEntity mainSetAndType = OdataUtil.getMainSetAndType(edmHelper);
+        if (Objects.isNull(mainSetAndType)) {
+            throw new ODataApplicationException("No Entity Type found.", HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ENGLISH);
         }
-        //mybatis查询对象
-        Map<String, Object> query = new HashMap<>();
-        //获取表名
-        String tableName = uriResource.getSegmentValue();
-
-        EdmEntitySet edmEntitySet;
-        //单个路径
-        if (uriResource instanceof UriResourceEntitySet) {
-            UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriResource;
-            edmEntitySet = uriResourceEntitySet.getEntitySet();
-        }
-        // 深度路径时`
-        else if (uriResource instanceof UriResourceNavigation) {
-            UriResourceNavigation uriResourceNavigation = (UriResourceNavigation) uriResource;
-            EdmNavigationProperty edmNavigationProperty = uriResourceNavigation.getProperty();
-            UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourceParts.stream().findFirst().orElse(null);
-            edmEntitySet = Util.getNavigationTargetEntitySet(uriResourceEntitySet.getEntitySet(), edmNavigationProperty);
-            List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-            List<Map<String, String>> map = new ArrayList<>();
-            for (int i = 1; i < resourceParts.size(); i++) {
-                int index = i - 1;
-                Map<String, String> join = new HashMap<>();
-                join.put("tableName", StrUtil.toUnderlineCase(resourceParts.get(index).getSegmentValue()));
-                join.put("field", keyPredicates.get(index).getName());
-                join.put("value", keyPredicates.get(index).getText());
-                map.add(join);
-                query.put("join", map);
-            }
-        } else {
-            throw new ODataApplicationException("Not supported", HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ROOT);
-        }
-
+        EdmEntitySet edmEntitySet = mainSetAndType.getEdmEntitySet();
+        EdmEntityType entityType = mainSetAndType.getEntityType();
 
         ContextURL contextUrl = ContextURL.with()
                 .entitySet(edmEntitySet)
@@ -118,13 +90,10 @@ public class CollectionProcessor implements org.apache.olingo.server.api.process
         final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
         EntityCollectionSerializerOptions.Builder builder = EntityCollectionSerializerOptions.with().id(id).contextURL(contextUrl);
 
-        Map<String, CommonOption> options = applicationContext.getBeansOfType(CommonOption.class);
-        for (CommonOption value : options.values()) {
-            value.filter(uriInfo, query);
-        }
+        Map<String, Object> query = OdataUtil.getSqlQuery(uriInfo, applicationContext.getBeansOfType(CommonOption.class), edmHelper);
 
         //查询数据库
-        List<?> sqlResult = commonProcessor.getService(tableName).selectByCondition(query);
+        List<?> sqlResult = commonProcessor.getService(edmEntitySet.getName()).selectByCondition(query);
         if (CollUtil.isEmpty(sqlResult)) {
             log.info("No requested resource msg:{}", JSON.toJSONString(query));
             throw new ODataApplicationException("No requested resource", HttpStatusCode.NOT_FOUND.getStatusCode(), Locale.ROOT);
@@ -134,23 +103,39 @@ public class CollectionProcessor implements org.apache.olingo.server.api.process
         //获取expand判断值
         ExpandOption expandOption = uriInfo.getExpandOption();
 
+
+//        entityType.getNavigationPropertyNames()
         //说明有expand组装对象
         if (query.containsKey("expand")) {
+            List<String> navigationPropertyNames = entityType.getNavigationPropertyNames();
             List<Entity> entities = entityCollection.getEntities();
-            for (Entity entity : entities) {
+            for (String navigationPropertyName : navigationPropertyNames) {
                 Link link = new Link();
                 link.setTitle(expandOption.getText());
                 link.setType(Constants.ENTITY_NAVIGATION_LINK_TYPE);
                 link.setRel(Constants.NS_ASSOCIATION_LINK_REL + expandOption.getText());
-                List<Property> properties = entity.getProperties();
-                for (Property property : properties) {
-                    if (property.getValue() instanceof List) {
-                        EntityCollection subCollection = OdataUtil.getEntityCollection((List<?>) property.getValue());
-                        link.setInlineEntitySet(subCollection);
-                    }
-                }
+                EdmElement edmElement = edmEntitySet.getEntityType().getProperty(navigationPropertyName);
+                for (Entity entity : entityCollection.getEntities()) {
 
-                entity.getNavigationLinks().add(link);
+                    entityType.getNavigationPropertyNames().forEach(propertyName ->
+                            entity.getProperties().stream()
+                                    .filter(property -> property.getName().equals(propertyName))
+                                    .findFirst()
+                                    .ifPresent(property -> {
+                                        if (edmElement.isCollection()) {
+                                            EntityCollection subCollection = OdataUtil.getEntityCollection((List<?>) property.getValue());
+                                            link.setInlineEntitySet(subCollection);
+                                            entity.getNavigationLinks().add(link);
+                                        } else {
+                                            EntityCollection subCollection = OdataUtil.getEntityCollection(Collections.singletonList(property.getValue()));
+                                            link.setInlineEntity(subCollection.getEntities().get(0));
+                                            entity.getNavigationLinks().add(link);
+                                        }
+
+                                    })
+                    );
+
+                }
             }
         }
         //获取count判断值
@@ -178,3 +163,5 @@ public class CollectionProcessor implements org.apache.olingo.server.api.process
         response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
     }
 }
+
+

@@ -45,7 +45,9 @@ public class CommonProcessor {
         Map<String, ?> serviceMap = applicationContext.getBeansOfType(ICommonService.class);
         for (Map.Entry<String, ?> entry : serviceMap.entrySet()) {
             ICommonService<?> ICommonService = (ICommonService<?>) entry.getValue();
-            SERVICE_MAP.put(cutClassStr(entry.getKey(),"Service"), ICommonService);
+            String key = cutClassStr(entry.getKey(), "Service");
+            key = editOdataMapKey(key);
+            SERVICE_MAP.put(key, ICommonService);
         }
 
         //init odata entity
@@ -53,6 +55,7 @@ public class CommonProcessor {
         for (Map.Entry<String, IEntity> entry : entityMap.entrySet()) {
             IEntity iEntity = entry.getValue();
             String className = cutClassStr(entry.getKey(), "Entity");
+            className = editOdataMapKey(className);
             ENTITY_MAP.put(className, iEntity);
             ENTITY_TYPE_MAP.put(className, iEntity.getEntityType());
         }
@@ -65,8 +68,8 @@ public class CommonProcessor {
 
     }
 
-    private String cutClassStr(String className, String cutStr){
-       return  StrUtil.upperFirst(className.replace(cutStr, StrUtil.EMPTY));
+    private String cutClassStr(String className, String cutStr) {
+        return className.replace(cutStr, StrUtil.EMPTY);
     }
 
 
@@ -85,11 +88,11 @@ public class CommonProcessor {
     }
 
     public List<CsdlEntityType> getEntityType(String typeName) {
-        if (Objects.nonNull(typeName)){
+        if (Objects.nonNull(typeName)) {
             return Collections.singletonList(ENTITY_TYPE_MAP.get(typeName));
         }
         List<CsdlEntityType> entityTypes = new ArrayList<>();
-        ENTITY_TYPE_MAP.forEach((x,y)->{
+        ENTITY_TYPE_MAP.forEach((x, y) -> {
             entityTypes.add(y);
         });
 
@@ -97,11 +100,11 @@ public class CommonProcessor {
     }
 
     public List<CsdlEntitySet> getEntitySet(String typeName) {
-        if (Objects.nonNull(typeName)){
+        if (Objects.nonNull(typeName)) {
             return Collections.singletonList(ENTITY_MAP.get(typeName).getEntitySet());
         }
         List<CsdlEntitySet> csdlEntitySets = new ArrayList<>();
-        ENTITY_MAP.forEach((x,y)->{
+        ENTITY_MAP.forEach((x, y) -> {
             csdlEntitySets.add(y.getEntitySet());
         });
 
@@ -124,10 +127,11 @@ public class CommonProcessor {
 
     /**
      * 反射方法 包括但不限于 OdataActionImport  OdataAction   OdataDoAction
-     * @param actionName 动作名字
+     *
+     * @param actionName      动作名字
      * @param clazz
-     * @param annotationClass  注解方法
-     * @param params 执行参数
+     * @param annotationClass 注解方法
+     * @param params          执行参数
      * @return
      */
     private List<Object> getOdataMethods(String actionName, Class<?> clazz, Class<? extends Annotation> annotationClass, Map<String, String> params) {
@@ -177,6 +181,10 @@ public class CommonProcessor {
 
     public IFunction getFunction(String db) {
         return FUNCTION_MAP.get(db);
+    }
+
+    private String editOdataMapKey(String key) {
+        return StrUtil.toUnderlineCase(key).toUpperCase();
     }
 
 }

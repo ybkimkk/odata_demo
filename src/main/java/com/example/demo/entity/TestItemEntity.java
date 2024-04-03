@@ -30,6 +30,7 @@ public class TestItemEntity extends CommonEntity implements IEntity {
     private Long ID;
     private String NAME;
     private Long TEST_ID;
+    private TestEntity TEST;
 
     @Override
     public CsdlEntityType getEntityType() {
@@ -42,15 +43,21 @@ public class TestItemEntity extends CommonEntity implements IEntity {
         CsdlPropertyRef propertyRef = new CsdlPropertyRef();
         propertyRef.setName("ID");
 
-        //多对一
+//        //多对一
         CsdlNavigationProperty navProp = new CsdlNavigationProperty()
-                .setName("Test") //传连接目标
-                .setType(OdataUtil.getAllFullQualifiedName("Test"))//传连接目标
+                .setName("TEST") //传连接目标
+                .setType(OdataUtil.getAllFullQualifiedName("TEST"))//传连接目标
                 .setNullable(true)
-                .setPartner("TestItem"); //传自己
+                .setPartner("TEST_ITEM"); //传自己
+
+//        CsdlNavigationProperty navProp = new CsdlNavigationProperty()
+//                .setName("Test") //传连接目标
+//                .setType(OdataUtil.getAllFullQualifiedName("Test"))//传连接目标
+//                .setCollection(true)
+//                .setPartner("TestItem"); //传自己
 
         CsdlEntityType entityType = new CsdlEntityType();
-        entityType.setName("TestItem");
+        entityType.setName("TEST_ITEM");
         entityType.setProperties(csdlPropertyArrayList);
         entityType.setKey(Collections.singletonList(propertyRef));
         entityType.setNavigationProperties(Collections.singletonList(navProp));
@@ -60,11 +67,11 @@ public class TestItemEntity extends CommonEntity implements IEntity {
     @Override
     public CsdlEntitySet getEntitySet() {
         CsdlEntitySet entitySet = new CsdlEntitySet();
-        entitySet.setName("TestItem");
-        entitySet.setType(OdataUtil.getAllFullQualifiedName("TestItem"));
+        entitySet.setName("TEST_ITEM");
+        entitySet.setType(OdataUtil.getAllFullQualifiedName("TEST_ITEM"));
         CsdlNavigationPropertyBinding navPropBinding = new CsdlNavigationPropertyBinding();
-        navPropBinding.setTarget("Test");
-        navPropBinding.setPath("Test");
+        navPropBinding.setTarget("TEST");
+        navPropBinding.setPath("TEST");
         entitySet.setNavigationPropertyBindings(Collections.singletonList(navPropBinding));
         return entitySet;
     }

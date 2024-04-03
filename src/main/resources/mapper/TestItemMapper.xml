@@ -2,15 +2,25 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.demo.mapper.TestItemMapper">
     <resultMap type="com.example.demo.entity.TestItemEntity" id="TestItemMap">
-        <result property="ID" column="ID"/>
+        <id property="ID" column="ID"/>
         <result property="NAME" column="NAME"/>
         <result property="TEST_ID" column="TEST_ID"/>
+        <association property="TEST" javaType="com.example.demo.entity.TestEntity">
+            <id property="ID" column="TEST_TEST_ID"/>
+            <result property="NAME" column="TEST_NAME"/>
+            <result property="AGE" column="TEST_AGE"/>
+            <result property="PRICE" column="TEST_PRICE"/>
+        </association>
     </resultMap>
 
     <sql id="base_column">
         `test_item`.`ID`,
         `test_item`.`NAME`,
-        `test_item`.`TEST_ID`
+        `test_item`.`TEST_ID`,
+        `test`.`ID` AS TEST_TEST_ID,
+        `test`.`NAME`AS TEST_NAME,
+        `test`.`PRICE`AS TEST_PRICE,
+        `test`.`AGE`AS TEST_AGE
     </sql>
 
     <sql id="table_name">`test_item`</sql>
@@ -32,15 +42,23 @@
         <include refid="base_column"/>
         from
         <include refid="table_name"/>
-        JOIN test ON `test_item`.TEST_ID = test.ID
+         LEFT JOIN test ON `test_item`.TEST_ID = test.ID
         <where>
-            <if test="arg.filter != null and arg.filter != ''">
-                ${arg.filter}
-            </if>
-            <if test="arg.filter == null or arg.filter == ''">
-                <include refid="base_where"/>
-            </if>
+            <trim prefixOverrides="and" prefix="">
+                <if test="arg.filter != null and arg.filter != ''">
+                    ${arg.filter}
+                </if>
+                <if test="arg.filter == null or arg.filter == ''">
+                    <include refid="base_where"/>
+                </if>
+                <if test="arg.join !=null">
+                    <foreach collection="arg.join" item="item">
+                        and ${item.table}.${item.field} = #{item.value}
+                    </foreach>
+                </if>
+            </trim>
         </where>
+
         <if test="arg.orderBy != null and arg.orderBy != ''">
             ORDER BY ${arg.orderBy}
         </if>
