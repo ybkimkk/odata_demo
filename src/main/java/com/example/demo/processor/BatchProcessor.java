@@ -19,7 +19,7 @@
 package com.example.demo.processor;
 
 
-import com.example.demo.data1.Storage;
+import com.example.demo.data.Storage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;

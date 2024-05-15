@@ -108,7 +108,6 @@ public class CollectionProcessor implements org.apache.olingo.server.api.process
         //说明有expand组装对象
         if (query.containsKey("expand")) {
             List<String> navigationPropertyNames = entityType.getNavigationPropertyNames();
-            List<Entity> entities = entityCollection.getEntities();
             for (String navigationPropertyName : navigationPropertyNames) {
                 Link link = new Link();
                 link.setTitle(expandOption.getText());

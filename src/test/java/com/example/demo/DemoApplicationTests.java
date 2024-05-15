@@ -1,6 +1,5 @@
 package com.example.demo;
 
-import com.example.demo.service.ITestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,7 +12,9 @@ import org.springframework.util.ClassUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @SpringBootTest
 class DemoApplicationTests {
@@ -28,6 +29,7 @@ class DemoApplicationTests {
         MetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory(resolver);
         String packageSearchPath = ClassUtils.convertClassNameToResourcePath("com.example.demo.entity") + "/*.class";
 
+
         for (org.springframework.core.io.Resource resource : resolver.getResources(packageSearchPath)) {
             MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(resource);
             String className = metadataReader.getClassMetadata().getClassName();
@@ -37,11 +39,12 @@ class DemoApplicationTests {
     }
 
     @Test
-    void  getClazz(){
-        Class<ITestService> testServiceClass = ITestService.class;
-
-        Object bean = applicationContext.getBean("testItemService");
-        System.out.println(bean);
+    void getClazz() {
+        String a = "asdasdb";
+        byte[] bytes = a.getBytes();
+        int length = IntStream.range(0, bytes.length)
+                .map(i -> bytes[i]).distinct().toArray().length;
+        System.out.println(length);
     }
 
 }

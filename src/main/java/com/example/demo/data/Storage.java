@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.example.demo.data1;
+package com.example.demo.data;
 
 
 import org.apache.olingo.commons.api.data.Entity;
